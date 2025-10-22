@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Cinema> Cinemas { get; set; }
     public DbSet<Room> Rooms { get; set; }
     public DbSet<Seat> Seats { get; set; }
+    public DbSet<Screening> Screenings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -32,6 +33,21 @@ public class AppDbContext : DbContext
             .WithOne(s => s.Room)
             .HasForeignKey(s => s.RoomId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Movie(One) - Screening(Many) 
+        modelBuilder.Entity<Movie>()
+            .HasMany(m => m.Screenings)
+            .WithOne(s => s.Movie)
+            .HasForeignKey(s => s.MovieId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Room(One) - Screening(Many)
+        modelBuilder.Entity<Room>()
+            .HasMany(r => r.Screenings)
+            .WithOne(s => s.Room)
+            .HasForeignKey(s => s.RoomId)
+            .OnDelete(DeleteBehavior.Cascade);
+
 
         base.OnModelCreating(modelBuilder);
     }

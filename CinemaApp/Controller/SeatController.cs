@@ -23,7 +23,7 @@ public class SeatController : ControllerBase
         Room? room = _roomService.Get(roomId);
         if (room == null) return NotFound($"Room {roomId} not found.");
 
-        return _seatService.GetAll().Where(s => s.RoomId == roomId).ToList();;
+        return _seatService.GetAll().Where(s => s.RoomId == roomId).ToList();
     }
 
     [HttpPost("room/{roomId}/generate")]

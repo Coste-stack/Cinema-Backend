@@ -24,6 +24,8 @@ public class Movie
     public MovieRating? Rating { get; set; }
 
     public DateTime? ReleaseDate { get; set; }
+
+    public ICollection<Screening> Screenings { get; } = new List<Screening>();
 }
 
 public enum MovieRating

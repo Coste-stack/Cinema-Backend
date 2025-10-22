@@ -17,4 +17,6 @@ public class Room
     public Cinema? Cinema { get; set; }
 
     public ICollection<Seat> Seats { get; } = new List<Seat>();
+
+    public ICollection<Screening> Screenings { get; } = new List<Screening>();
 }
