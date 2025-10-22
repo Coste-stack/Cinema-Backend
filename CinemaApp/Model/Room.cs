@@ -14,5 +14,7 @@ public class Room
     public int Capacity { get; set; }
 
     public int CinemaId { get; set; }
-    public Cinema Cinema { get; set; } = null!;
+    public Cinema? Cinema { get; set; }
+
+    public ICollection<Seat> Seats { get; } = new List<Seat>();
 }

@@ -10,6 +10,16 @@ Accept: application/json
 GET {{CinemaApp_HostAddress}}/Cinema/1
 Accept: application/json
 
+### Create a cinema
+POST {{CinemaApp_HostAddress}}/Cinema
+Content-Type: application/json
+
+{
+  "name": "Cinema Galaxy",
+  "address": "Main Street 10",
+  "city": "Warsaw"
+}
+
 ### Update a cinema
 PUT {{CinemaApp_HostAddress}}/Cinema/1
 Content-Type: application/json
@@ -42,11 +52,11 @@ Content-Type: application/json
 {
   "name": "Room A",
   "capacity": 150,
-  "cinemaId": 1
+  "cinemaId": 2
 }
 
 ### Create a room using nested route
-POST {{CinemaApp_HostAddress}}/Room/cinemas/1
+POST {{CinemaApp_HostAddress}}/Room/cinemas/2
 Content-Type: application/json
 
 {
@@ -67,6 +77,25 @@ Content-Type: application/json
 
 ### Delete a room
 DELETE {{CinemaApp_HostAddress}}/Room/1
+
+
+### --- Seat
+
+### Get all seats for a room
+GET {{CinemaApp_HostAddress}}/Seat/room/1
+Accept: application/json
+
+### Generate seats for a room
+POST {{CinemaApp_HostAddress}}/Seat/room/1/generate?rows=5&seatsPerRow=10
+Accept: application/json
+
+### Delete a single seat
+DELETE {{CinemaApp_HostAddress}}/Seat/1
+Accept: application/json
+
+### Delete all seats in a room
+DELETE {{CinemaApp_HostAddress}}/Seat/room/1
+Accept: application/json
 
 
 ### --- Movie

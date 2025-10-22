@@ -8,8 +8,8 @@ namespace CinemaApp.Controller;
 [Route("[controller]")]
 public class RoomController : ControllerBase
 {
-    private readonly ICinemaService _cinemaService;
     private readonly IRoomService _roomService;
+    private readonly ICinemaService _cinemaService;
 
     public RoomController(IRoomService roomService, ICinemaService cinemaService)
     {
@@ -25,16 +25,16 @@ public class RoomController : ControllerBase
     [HttpGet("{id}")]
     public ActionResult<Room> Get(int id)
     {
-        var room = _roomService.Get(id);
-
+        Room? room = _roomService.Get(id);
         if (room == null) return NotFound();
+
         return room;
     }
 
     [HttpPost]
     public IActionResult Create([FromBody] Room room)
     {
-        var cinema = _cinemaService.Get(room.CinemaId);
+        Cinema? cinema = _cinemaService.Get(room.CinemaId);
         if (cinema == null) 
             return NotFound($"Cinema with ID {room.CinemaId} not found.");
 
@@ -45,7 +45,7 @@ public class RoomController : ControllerBase
     [HttpPost("cinemas/{cinemaId}")]
     public IActionResult Create(int cinemaId, [FromBody] Room room)
     {
-        var cinema = _cinemaService.Get(cinemaId);
+        Cinema? cinema = _cinemaService.Get(cinemaId);
         if (cinema == null) 
             return NotFound($"Cinema with ID {cinemaId} not found.");
 
@@ -60,7 +60,7 @@ public class RoomController : ControllerBase
         if (id != room.Id)
         return BadRequest();
             
-        var existingRoom = _roomService.Get(id);
+        Room? existingRoom = _roomService.Get(id);
         if(existingRoom == null) return NotFound();
     
         _roomService.Update(room);           
@@ -70,8 +70,7 @@ public class RoomController : ControllerBase
     [HttpDelete("{id}")]
     public IActionResult Delete(int id)
     {
-        var room = _roomService.Get(id);
-   
+        Room? room = _roomService.Get(id);
         if (room == null) return NotFound();
         
         _roomService.Delete(id);

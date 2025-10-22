@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<Movie> Movies { get; set; }
     public DbSet<Cinema> Cinemas { get; set; }
     public DbSet<Room> Rooms { get; set; }
+    public DbSet<Seat> Seats { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -23,6 +24,13 @@ public class AppDbContext : DbContext
             .HasMany(c => c.Rooms)
             .WithOne(r => r.Cinema)
             .HasForeignKey(r => r.CinemaId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Room(One) - Seat(Many) 
+        modelBuilder.Entity<Room>()
+            .HasMany(r => r.Seats)
+            .WithOne(s => s.Room)
+            .HasForeignKey(s => s.RoomId)
             .OnDelete(DeleteBehavior.Cascade);
 
         base.OnModelCreating(modelBuilder);
