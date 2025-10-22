@@ -50,6 +50,18 @@ public class SeatController : ControllerBase
         return Ok(seatList);
     }
 
+    [HttpPatch("{id}/status")]
+    public IActionResult UpdateStatus(int id, [FromQuery] SeatStatus status)
+    {
+        Seat? seat = _seatService.Get(id);
+        if (seat == null) return NotFound($"Seat with ID {id} not found.");
+
+        seat.Status = status;
+        _seatService.Update(seat);
+
+        return Ok(seat);
+    }
+
     [HttpDelete("{id}")]
     public IActionResult Delete(int id)
     {

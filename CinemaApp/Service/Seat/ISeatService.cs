@@ -6,6 +6,7 @@ public interface ISeatService
 {
     List<Seat> GetAll();
     Seat? Get(int id);
-    public void AddRange(IEnumerable<Seat> seats);
+    void AddRange(IEnumerable<Seat> seats);
+    void Update(Seat seat);
     void Delete(int id);
 }

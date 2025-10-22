@@ -33,21 +33,24 @@ public class ScreeningRepository : IScreeningRepository
 
     public void Update(Screening screening)
     {
+        Screening? existing = _context.Screenings.Find(screening.Id);
+        if (existing == null) return;
+
         Validate(screening);
+
+        if (screening.EndTime == null && existing.EndTime != null)
+            screening.EndTime = existing.EndTime;
+
+        if (screening.Language == null && existing.Language != null)
+            screening.Language = existing.Language;
 
         _context.SaveChanges();
     }
 
     private void Validate(Screening screening)
     {
-        Screening? existingScreening = _context.Screenings.Find(screening.Id);
-        if (existingScreening == null) return;
-
-        if (screening.EndTime == null && existingScreening.EndTime != null)
-            screening.EndTime = existingScreening.EndTime;
-
-        if (screening.Language == null && existingScreening.Language != null)
-            screening.Language = existingScreening.Language;
+        if (!Enum.IsDefined(screening.ProjectionType))
+            throw new ArgumentException($"Invalid screening projection: {screening.ProjectionType}");
 
         if (screening.StartTime >= screening.EndTime)
             throw new ArgumentException("EndTime must be after StartTime.");

@@ -16,16 +16,41 @@ public class SeatRepository : ISeatRepository
 
     public void AddRange(IEnumerable<Seat> seats)
     {
+        foreach (Seat seat in seats)
+        {
+            Validate(seat);
+        }
+
         _context.Seats.AddRange(seats);
+        _context.SaveChanges();
+    }
+
+    public void Update(Seat seat)
+    {
+        Seat? existing = _context.Seats.Find(seat.Id);
+        if (existing == null)
+            throw new KeyNotFoundException($"Seat with ID {seat.Id} not found.");
+
+        Validate(seat);
+
+        existing.Status = seat.Status;
+
         _context.SaveChanges();
     }
 
     public void Delete(int id)
     {
-        var seat = _context.Seats.Find(id);
-        if (seat == null) return;
+        Seat? seat = _context.Seats.Find(id);
+        if (seat == null)
+            throw new KeyNotFoundException($"Seat with ID {id} not found.");
 
         _context.Seats.Remove(seat);
         _context.SaveChanges();
+    }
+    
+    private void Validate(Seat seat)
+    {
+        if (!Enum.IsDefined(seat.Status))
+            throw new ArgumentException($"Invalid seat status: {seat.Status}");
     }
 }

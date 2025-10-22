@@ -13,6 +13,15 @@ public class Seat
     [Required]
     public int Number { get; set; }
 
+    [Required]
+    public SeatStatus Status { get; set; } = SeatStatus.Available;
+
     public int RoomId { get; set; }
     public Room? Room { get; set; }
+}
+
+public enum SeatStatus
+{
+    Available,
+    Reserved
 }

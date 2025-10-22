@@ -17,12 +17,18 @@ public class SeatService : ISeatService
     public Seat? Get(int id)
     {
         return _repository.GetById(id);
-    } 
+    }
 
     public void AddRange(IEnumerable<Seat> seats)
     {
         _repository.AddRange(seats);
     }
+    
+    public void Update(Seat seat)
+    {
+        _repository.Update(seat);
+    }
+
 
     public void Delete(int id)
     {

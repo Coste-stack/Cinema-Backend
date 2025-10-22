@@ -7,6 +7,7 @@ public interface ISeatRepository
 {
     List<Seat> GetAll();
     Seat? GetById(int id);
-    public void AddRange(IEnumerable<Seat> seats);
+    void AddRange(IEnumerable<Seat> seats);
+    void Update(Seat seat);
     void Delete(int id);
 }
