@@ -1,6 +1,39 @@
 @Cinema_HostAddress = http://localhost:5173
 
-GET {{Cinema_HostAddress}}/weatherforecast/
+### Get all movies
+GET {{Cinema_HostAddress}}/Movie
 Accept: application/json
 
-###
+### Get a movie by id
+GET {{Cinema_HostAddress}}/Movie/1
+Accept: application/json
+
+### Create a new movie
+POST {{Cinema_HostAddress}}/Movie
+Content-Type: application/json
+
+{
+  "title": "Inception",
+  "description": "A mind-bending thriller",
+  "duration": 148,
+  "genre": "Sci-Fi",
+  "rating": "PG13",
+  "releaseDate": "2010-07-16T00:00:00"
+}
+
+### Update a movie
+PUT {{Cinema_HostAddress}}/Movie/1
+Content-Type: application/json
+
+{
+  "id": 1,
+  "title": "Inception Updated",
+  "description": "Updated description",
+  "duration": 148,
+  "genre": "Sci-Fi",
+  "rating": "PG13",
+  "releaseDate": "2010-07-16T00:00:00"
+}
+
+### Delete a movie
+DELETE {{Cinema_HostAddress}}/Movie/1

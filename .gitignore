@@ -3,5 +3,6 @@ obj/
 
 .vscode/
 .idea/
+*.code-workspace
 
 appsettings.json
