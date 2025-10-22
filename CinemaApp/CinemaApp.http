@@ -1,0 +1,110 @@
+@CinemaApp_HostAddress = http://localhost:5173
+
+### --- CINEMA
+
+### Get all cinemas
+GET {{CinemaApp_HostAddress}}/Cinema
+Accept: application/json
+
+### Get a cinema by id
+GET {{CinemaApp_HostAddress}}/Cinema/1
+Accept: application/json
+
+### Update a cinema
+PUT {{CinemaApp_HostAddress}}/Cinema/1
+Content-Type: application/json
+
+{
+  "id": 1,
+  "name": "Cinema Galaxy Updated",
+  "address": "Main Street 10",
+  "city": "Warsaw"
+}
+
+### Delete a cinema
+DELETE {{CinemaApp_HostAddress}}/Cinema/1
+
+
+### --- Room
+
+### Get all rooms
+GET {{CinemaApp_HostAddress}}/Room
+Accept: application/json
+
+### Get a room by id
+GET {{CinemaApp_HostAddress}}/Room/1
+Accept: application/json
+
+### Create a room for cinema (body includes CinemaId)
+POST {{CinemaApp_HostAddress}}/Room
+Content-Type: application/json
+
+{
+  "name": "Room A",
+  "capacity": 150,
+  "cinemaId": 1
+}
+
+### Create a room using nested route
+POST {{CinemaApp_HostAddress}}/Room/cinemas/1
+Content-Type: application/json
+
+{
+  "name": "Room B",
+  "capacity": 200
+}
+
+### Update a room
+PUT {{CinemaApp_HostAddress}}/Room/1
+Content-Type: application/json
+
+{
+  "id": 1,
+  "name": "Room A Updated",
+  "capacity": 180,
+  "cinemaId": 1
+}
+
+### Delete a room
+DELETE {{CinemaApp_HostAddress}}/Room/1
+
+
+### --- Movie
+
+### Get all movies
+GET {{CinemaApp_HostAddress}}/Movie
+Accept: application/json
+
+### Get a movie by id
+GET {{CinemaApp_HostAddress}}/Movie/1
+Accept: application/json
+
+### Create a new movie
+POST {{CinemaApp_HostAddress}}/Movie
+Content-Type: application/json
+
+{
+  "title": "Inception",
+  "description": "A mind-bending thriller",
+  "duration": 148,
+  "genre": "Sci-Fi",
+  "rating": "PG13",
+  "releaseDate": "2010-07-16T00:00:00"
+}
+
+### Update a movie
+PUT {{CinemaApp_HostAddress}}/Movie/1
+Content-Type: application/json
+
+{
+  "id": 1,
+  "title": "Inception Updated",
+  "description": "Updated description",
+  "duration": 148,
+  "genre": "Sci-Fi",
+  "rating": "PG13",
+  "releaseDate": "2010-07-16T00:00:00"
+}
+
+### Delete a movie
+DELETE {{CinemaApp_HostAddress}}/Movie/1
