@@ -11,12 +11,14 @@ public class ScreeningController : ControllerBase
     private readonly IScreeningService _screeningService;
     private readonly IMovieService _movieService;
     private readonly IRoomService _roomService;
+    private readonly IProjectionTypeService _projectionTypeService;
 
-    public ScreeningController(IScreeningService screeningService, IMovieService movieService, IRoomService roomService)
+    public ScreeningController(IScreeningService screeningService, IMovieService movieService, IRoomService roomService, IProjectionTypeService projectionTypeService)
     {
         _screeningService = screeningService;
         _movieService = movieService;
         _roomService = roomService;
+        _projectionTypeService = projectionTypeService;
     }
 
 
@@ -125,6 +127,10 @@ public class ScreeningController : ControllerBase
     
     private IActionResult? Validate(Screening screening)
     {
+        ProjectionType? projectionType = _projectionTypeService.GetById(screening.ProjectionTypeId);
+        if (projectionType == null)
+            return NotFound($"ProjectionType with ID {screening.ProjectionTypeId} not found.");
+
         Movie? movie = _movieService.Get(screening.MovieId);
         if (movie == null)
             return NotFound($"Movie with ID {screening.MovieId} not found.");

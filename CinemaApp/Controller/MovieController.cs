@@ -18,7 +18,6 @@ public class MovieController(IMovieService service) : ControllerBase
     public ActionResult<Movie> Get(int id)
     {
         var movie = _service.Get(id);
-
         if (movie == null) return NotFound();
         return movie;
     }
@@ -47,7 +46,6 @@ public class MovieController(IMovieService service) : ControllerBase
     public IActionResult Delete(int id)
     {
         var movie = _service.Get(id);
-   
         if (movie == null) return NotFound();
         
         _service.Delete(id);

@@ -18,6 +18,8 @@ public class AppDbContext : DbContext
     public DbSet<Seat> Seats { get; set; }
     public DbSet<Screening> Screenings { get; set; }
 
+    public DbSet<ProjectionType> ProjectionTypes { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Cinema(One) - Room(Many) 

@@ -26,11 +26,15 @@ builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<ISeatRepository, SeatRepository>();
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
 
+builder.Services.AddScoped<IProjectionTypeRepository, ProjectionTypeRepository>();
+
 // Register services
 builder.Services.AddScoped<ICinemaService, CinemaService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<ISeatService, SeatService>();
 builder.Services.AddScoped<IMovieService, MovieService>();
+
+builder.Services.AddScoped<IProjectionTypeService, ProjectionTypeService>();
 
 var app = builder.Build();
 

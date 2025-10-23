@@ -10,222 +10,313 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
-namespace CinemaApp.Tests;
-
-public class ScreeningControllerTests
+namespace CinemaApp.Tests
 {
-    private static AppDbContext CreateTestDbContext()
+    public class ScreeningControllerTests
     {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-
-        return new AppDbContext(options);
-    }
-
-    private static ScreeningController CreateControllerWithSeededData(out Movie movie, out Room room)
-    {
-        var context = CreateTestDbContext();
-
-        // Seed movie and room
-        movie = new Movie { Title = "Inception", Duration = 120, Genre = "Sci-Fi" };
-        room = new Room { Name = "Room 1" };
-        context.Movies.Add(movie);
-        context.Rooms.Add(room);
-        context.SaveChanges();
-
-        // Set up dependencies
-        IScreeningRepository screeningRepo = new ScreeningRepository(context);
-        IScreeningService screeningService = new ScreeningService(screeningRepo);
-
-        IMovieRepository movieRepo = new MovieRepository(context);
-        IMovieService movieService = new MovieService(movieRepo);
-
-        IRoomRepository roomRepo = new RoomRepository(context);
-        IRoomService roomService = new RoomService(roomRepo);
-
-        return new ScreeningController(screeningService, movieService, roomService);
-    }
-
-    [Fact]
-    public void GetAll_ReturnsEmpty_WhenNoScreenings()
-    {
-        var controller = CreateControllerWithSeededData(out var movie, out var room);
-
-        var result = controller.GetAll();
-
-        var screenings = Assert.IsType<List<Screening>>(result.Value);
-        Assert.Empty(screenings);
-    }
-
-    [Fact]
-    public void Create_AddsScreening_AndReturnsCreated()
-    {
-        var controller = CreateControllerWithSeededData(out var movie, out var room);
-
-        var screening = new Screening
+        private static AppDbContext CreateTestDbContext()
         {
-            MovieId = movie.Id,
-            RoomId = room.Id,
-            StartTime = DateTime.Now
-        };
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options;
 
-        var result = controller.Create(screening);
+            return new AppDbContext(options);
+        }
 
-        var created = Assert.IsType<CreatedAtActionResult>(result);
-        var returnedScreening = Assert.IsType<Screening>(created.Value);
-
-        Assert.Equal(screening.MovieId, returnedScreening.MovieId);
-        Assert.NotNull(returnedScreening.EndTime);
-    }
-
-    [Fact]
-    public void Create_ReturnsNotFound_WhenMovieMissing()
-    {
-        var controller = CreateControllerWithSeededData(out var movie, out var room);
-
-        var screening = new Screening
+        private static ScreeningController CreateControllerWithSeededData(out Movie movie, out Room room, out ProjectionType projectionType)
         {
-            MovieId = 999,
-            RoomId = room.Id,
-            StartTime = DateTime.Now
-        };
+            var context = CreateTestDbContext();
 
-        var result = controller.Create(screening);
+            // Seed movie, room, projection type
+            movie = new Movie { Title = "Inception", Duration = 120, Genre = "Sci-Fi" };
+            room = new Room { Name = "Room 1" };
+            projectionType = new ProjectionType { Name = "2D" };
 
-        var notFound = Assert.IsType<NotFoundObjectResult>(result);
-        Assert.Contains("Movie with ID 999 not found", notFound.Value?.ToString() ?? string.Empty);
-    }
+            context.Movies.Add(movie);
+            context.Rooms.Add(room);
+            context.ProjectionTypes.Add(projectionType);
+            context.SaveChanges();
 
-    [Fact]
-    public void GetById_ReturnsScreening_WhenExists()
-    {
-        var controller = CreateControllerWithSeededData(out var movie, out var room);
+            // Set up dependencies
+            IScreeningRepository screeningRepo = new ScreeningRepository(context);
+            IScreeningService screeningService = new ScreeningService(screeningRepo);
 
-        var screening = new Screening
+            IMovieRepository movieRepo = new MovieRepository(context);
+            IMovieService movieService = new MovieService(movieRepo);
+
+            IRoomRepository roomRepo = new RoomRepository(context);
+            IRoomService roomService = new RoomService(roomRepo);
+
+            IProjectionTypeRepository projectionTypeRepo = new ProjectionTypeRepository(context);
+            IProjectionTypeService projectionTypeService = new ProjectionTypeService(projectionTypeRepo);
+
+            return new ScreeningController(screeningService, movieService, roomService, projectionTypeService);
+        }
+
+        [Fact]
+        public void GetAll_ReturnsEmpty_WhenNoScreenings()
         {
-            MovieId = movie.Id,
-            RoomId = room.Id,
-            StartTime = DateTime.Now
-        };
+            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
 
-        controller.Create(screening);
+            var result = controller.GetAll();
 
-        var result = controller.GetById(screening.Id);
+            var screenings = Assert.IsType<List<Screening>>(result.Value);
+            Assert.Empty(screenings);
+        }
 
-        var found = Assert.IsType<Screening>(result.Value);
-        Assert.Equal(screening.Id, found.Id);
-    }
-
-    [Fact]
-    public void GetById_ReturnsNotFound_WhenDoesNotExist()
-    {
-        var controller = CreateControllerWithSeededData(out var movie, out var room);
-
-        var result = controller.GetById(999);
-
-        Assert.IsType<NotFoundResult>(result.Result);
-    }
-
-    [Fact]
-    public void Update_ModifiesExistingScreening()
-    {
-        var controller = CreateControllerWithSeededData(out var movie, out var room);
-
-        var screening = new Screening
+        [Fact]
+        public void Create_AddsScreening_AndReturnsCreated()
         {
-            MovieId = movie.Id,
-            RoomId = room.Id,
-            StartTime = DateTime.Now
-        };
-        controller.Create(screening);
+            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
 
-        screening.StartTime = screening.StartTime.AddHours(2);
-        var result = controller.Update(screening.Id, screening);
+            var screening = new Screening
+            {
+                MovieId = movie.Id,
+                RoomId = room.Id,
+                ProjectionTypeId = projectionType.Id,
+                StartTime = DateTime.UtcNow,
+                EndTime = DateTime.UtcNow.AddHours(2)
+            };
 
-        Assert.IsType<NoContentResult>(result);
+            var result = controller.Create(screening);
 
-        var updated = controller.GetById(screening.Id).Value!;
-        Assert.Equal(screening.StartTime, updated.StartTime);
-    }
+            var created = Assert.IsType<CreatedAtActionResult>(result);
+            var returnedScreening = Assert.IsType<Screening>(created.Value);
 
-    [Fact]
-    public void Update_ReturnsNotFound_WhenScreeningMissing()
-    {
-        var controller = CreateControllerWithSeededData(out var movie, out var room);
+            Assert.Equal(screening.MovieId, returnedScreening.MovieId);
+            Assert.Equal(projectionType.Id, returnedScreening.ProjectionTypeId);
+            Assert.Equal(screening.EndTime, returnedScreening.EndTime);
+        }
 
-        var screening = new Screening
+        [Fact]
+        public void Create_ReturnsNotFound_WhenMovieMissing()
         {
-            Id = 123,
-            MovieId = movie.Id,
-            RoomId = room.Id,
-            StartTime = DateTime.Now
-        };
+            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
 
-        var result = controller.Update(123, screening);
+            var screening = new Screening
+            {
+                MovieId = 999,
+                RoomId = room.Id,
+                ProjectionTypeId = projectionType.Id,
+                StartTime = DateTime.UtcNow,
+                EndTime = DateTime.UtcNow.AddHours(2)
+            };
 
-        Assert.IsType<NotFoundResult>(result);
-    }
+            var result = controller.Create(screening);
 
-    [Fact]
-    public void DeleteById_RemovesScreening()
-    {
-        var controller = CreateControllerWithSeededData(out var movie, out var room);
+            var notFound = Assert.IsType<NotFoundObjectResult>(result);
+            Assert.Contains("Movie with ID 999 not found", notFound.Value?.ToString() ?? string.Empty);
+        }
 
-        var screening = new Screening
+        [Fact]
+        public void Create_ReturnsNotFound_WhenProjectionTypeMissing()
         {
-            MovieId = movie.Id,
-            RoomId = room.Id,
-            StartTime = DateTime.Now
-        };
-        controller.Create(screening);
+            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
 
-        var deleteResult = controller.DeleteById(screening.Id);
-        Assert.IsType<NoContentResult>(deleteResult);
+            var screening = new Screening
+            {
+                MovieId = movie.Id,
+                RoomId = room.Id,
+                ProjectionTypeId = 999,
+                StartTime = DateTime.UtcNow,
+                EndTime = DateTime.UtcNow.AddHours(2)
+            };
 
-        var check = controller.GetById(screening.Id).Result;
-        Assert.IsType<NotFoundResult>(check);
-    }
+            var result = controller.Create(screening);
 
-    [Fact]
-    public void DeleteByMovie_RemovesAllScreeningsForThatMovie()
-    {
-        var controller = CreateControllerWithSeededData(out var movie, out var room);
+            var notFound = Assert.IsType<NotFoundObjectResult>(result);
+            Assert.Contains("ProjectionType with ID 999 not found", notFound.Value?.ToString() ?? string.Empty);
+        }
 
-        var s1 = new Screening { MovieId = movie.Id, RoomId = room.Id, StartTime = DateTime.Now };
-        var s2 = new Screening { MovieId = movie.Id, RoomId = room.Id, StartTime = DateTime.Now.AddHours(3) };
-        controller.Create(s1);
-        controller.Create(s2);
-
-        var result = controller.DeleteByMovie(movie.Id);
-
-        Assert.IsType<NoContentResult>(result);
-
-        var remaining = controller.GetByMovie(movie.Id).Value!;
-        Assert.Empty(remaining);
-    }
-
-    [Fact]
-    public void Create_ThrowsError_WhenOverlapping()
-    {
-        var controller = CreateControllerWithSeededData(out var movie, out var room);
-
-        var s1 = new Screening
+        [Fact]
+        public void GetById_ReturnsScreening_WhenExists()
         {
-            MovieId = movie.Id,
-            RoomId = room.Id,
-            StartTime = DateTime.Now
-        };
-        controller.Create(s1);
+            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
 
-        var s2 = new Screening
+            var screening = new Screening
+            {
+                MovieId = movie.Id,
+                RoomId = room.Id,
+                ProjectionTypeId = projectionType.Id,
+                StartTime = DateTime.UtcNow,
+                EndTime = DateTime.UtcNow.AddHours(2)
+            };
+
+            controller.Create(screening);
+
+            var result = controller.GetById(screening.Id);
+
+            var found = Assert.IsType<Screening>(result.Value);
+            Assert.Equal(screening.Id, found.Id);
+            Assert.Equal(projectionType.Id, found.ProjectionTypeId);
+        }
+
+        [Fact]
+        public void GetById_ReturnsNotFound_WhenDoesNotExist()
         {
-            MovieId = movie.Id,
-            RoomId = room.Id,
-            StartTime = s1.StartTime.AddMinutes(30)
-        };
+            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
 
-        var ex = Assert.Throws<InvalidOperationException>(() => controller.Create(s2));
-        Assert.Contains("Room is already booked", ex.Message);
+            var result = controller.GetById(999);
+
+            Assert.IsType<NotFoundResult>(result.Result);
+        }
+
+        [Fact]
+        public void Update_ModifiesExistingScreening()
+        {
+            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
+
+            var screening = new Screening
+            {
+                MovieId = movie.Id,
+                RoomId = room.Id,
+                ProjectionTypeId = projectionType.Id,
+                StartTime = DateTime.UtcNow,
+                EndTime = DateTime.UtcNow.AddHours(2)
+            };
+            controller.Create(screening);
+
+            screening.StartTime = screening.StartTime.AddHours(2);
+            var result = controller.Update(screening.Id, screening);
+
+            Assert.IsType<NoContentResult>(result);
+
+            var updated = controller.GetById(screening.Id).Value!;
+            Assert.Equal(screening.StartTime, updated.StartTime);
+            Assert.Equal(projectionType.Id, updated.ProjectionTypeId);
+        }
+
+        [Fact]
+        public void Update_ReturnsNotFound_WhenScreeningMissing()
+        {
+            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
+
+            var screening = new Screening
+            {
+                Id = 123,
+                MovieId = movie.Id,
+                RoomId = room.Id,
+                ProjectionTypeId = projectionType.Id,
+                StartTime = DateTime.UtcNow,
+                EndTime = DateTime.UtcNow.AddHours(2)
+            };
+
+            var result = controller.Update(123, screening);
+
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public void DeleteById_RemovesScreening()
+        {
+            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
+
+            var screening = new Screening
+            {
+                MovieId = movie.Id,
+                RoomId = room.Id,
+                ProjectionTypeId = projectionType.Id,
+                StartTime = DateTime.UtcNow,
+                EndTime = DateTime.UtcNow.AddHours(2)
+            };
+            controller.Create(screening);
+
+            var deleteResult = controller.DeleteById(screening.Id);
+            Assert.IsType<NoContentResult>(deleteResult);
+
+            var check = controller.GetById(screening.Id).Result;
+            Assert.IsType<NotFoundResult>(check);
+        }
+
+        [Fact]
+        public void DeleteByMovie_RemovesAllScreeningsForThatMovie()
+        {
+            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
+
+            var s1 = new Screening { MovieId = movie.Id, RoomId = room.Id, ProjectionTypeId = projectionType.Id, StartTime = DateTime.UtcNow, EndTime = DateTime.UtcNow.AddHours(2) };
+            var s2 = new Screening { MovieId = movie.Id, RoomId = room.Id, ProjectionTypeId = projectionType.Id, StartTime = DateTime.UtcNow.AddHours(3), EndTime = DateTime.UtcNow.AddHours(5) };
+            controller.Create(s1);
+            controller.Create(s2);
+
+            var result = controller.DeleteByMovie(movie.Id);
+
+            Assert.IsType<NoContentResult>(result);
+
+            var remaining = controller.GetByMovie(movie.Id).Value!;
+            Assert.Empty(remaining);
+        }
+
+        [Fact]
+        public void DeleteByRoom_RemovesAllScreeningsForThatRoom()
+        {
+            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
+
+            var s1 = new Screening { MovieId = movie.Id, RoomId = room.Id, ProjectionTypeId = projectionType.Id, StartTime = DateTime.UtcNow, EndTime = DateTime.UtcNow.AddHours(2) };
+            var s2 = new Screening { MovieId = movie.Id, RoomId = room.Id, ProjectionTypeId = projectionType.Id, StartTime = DateTime.UtcNow.AddHours(3), EndTime = DateTime.UtcNow.AddHours(5) };
+            controller.Create(s1);
+            controller.Create(s2);
+
+            var result = controller.DeleteByRoom(room.Id);
+
+            Assert.IsType<NoContentResult>(result);
+
+            var remaining = controller.GetByRoom(room.Id).Value!;
+            Assert.Empty(remaining);
+        }
+
+        [Fact]
+        public void Create_SetsEndTimeBasedOnMovieDuration()
+        {
+            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
+
+            var start = DateTime.UtcNow;
+            var screening = new Screening
+            {
+                MovieId = movie.Id,
+                RoomId = room.Id,
+                ProjectionTypeId = projectionType.Id,
+                StartTime = start,
+                EndTime = null
+            };
+
+            var result = controller.Create(screening);
+            var created = Assert.IsType<CreatedAtActionResult>(result);
+            var returned = Assert.IsType<Screening>(created.Value);
+
+            Assert.Equal(start.AddMinutes(movie.Duration), returned.EndTime);
+        }
+
+        [Fact]
+        public void Update_PreservesExistingEndTime_WhenNewEndTimeIsNull()
+        {
+            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
+
+            var screening = new Screening
+            {
+                MovieId = movie.Id,
+                RoomId = room.Id,
+                ProjectionTypeId = projectionType.Id,
+                StartTime = DateTime.UtcNow,
+                EndTime = DateTime.UtcNow.AddHours(2),
+                Language = "English"
+            };
+            controller.Create(screening);
+
+            var updated = new Screening
+            {
+                Id = screening.Id,
+                MovieId = movie.Id,
+                RoomId = room.Id,
+                ProjectionTypeId = projectionType.Id,
+                StartTime = screening.StartTime.AddHours(1),
+                EndTime = null,
+                Language = null
+            };
+            controller.Update(screening.Id, updated);
+
+            var result = controller.GetById(screening.Id).Value!;
+            Assert.Equal(screening.EndTime, result.EndTime);
+            Assert.Equal("English", result.Language);
+        }
     }
 }

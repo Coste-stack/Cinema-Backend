@@ -49,8 +49,12 @@ public class ScreeningRepository : IScreeningRepository
 
     private void Validate(Screening screening)
     {
-        if (!Enum.IsDefined(screening.ProjectionType))
-            throw new ArgumentException($"Invalid screening projection: {screening.ProjectionType}");
+        if (screening.ProjectionTypeId <= 0)
+            throw new ArgumentException("ProjectionTypeId must be specified.");
+        if (screening.MovieId <= 0)
+            throw new ArgumentException("MovieId must be specified.");
+        if (screening.RoomId <= 0)
+            throw new ArgumentException("RoomId must be specified.");
 
         if (screening.StartTime >= screening.EndTime)
             throw new ArgumentException("EndTime must be after StartTime.");

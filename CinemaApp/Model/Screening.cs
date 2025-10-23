@@ -13,23 +13,15 @@ public class Screening
 
     public DateTime? EndTime { get; set; }
 
-    public ProjectionType ProjectionType { get; set; } = ProjectionType.TwoD;
-
     public string? Language { get; set; }
+
+    [Required]
+    public int ProjectionTypeId { get; set; }
+    public ProjectionType? ProjectionType { get; set; }
 
     public int RoomId { get; set; }
     public Room? Room { get; set; }
 
     public int MovieId { get; set; }
     public Movie? Movie { get; set; }
-}
-
-// TODO: Convert to separate table
-public enum ProjectionType
-{
-    [Description("3D")]
-    ThreeD,
-
-    [Description("2D")]
-    TwoD
 }
