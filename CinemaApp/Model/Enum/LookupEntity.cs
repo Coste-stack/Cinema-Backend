@@ -1,0 +1,12 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace CinemaApp.Model;
+
+public abstract class LookupEntity
+{
+    [Key]
+    public int Id { get; set; }
+
+    [Required]
+    public string Name { get; set; } = null!;
+}

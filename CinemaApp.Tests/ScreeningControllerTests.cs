@@ -47,8 +47,8 @@ namespace CinemaApp.Tests
             IRoomRepository roomRepo = new RoomRepository(context);
             IRoomService roomService = new RoomService(roomRepo);
 
-            IProjectionTypeRepository projectionTypeRepo = new ProjectionTypeRepository(context);
-            IProjectionTypeService projectionTypeService = new ProjectionTypeService(projectionTypeRepo);
+            ILookupRepository<ProjectionType> projectionTypeRepo = new LookupRepository<ProjectionType>(context);
+            ILookupService<ProjectionType> projectionTypeService = new LookupService<ProjectionType>(projectionTypeRepo);
 
             return new ScreeningController(screeningService, movieService, roomService, projectionTypeService);
         }

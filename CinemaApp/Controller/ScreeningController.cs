@@ -11,9 +11,9 @@ public class ScreeningController : ControllerBase
     private readonly IScreeningService _screeningService;
     private readonly IMovieService _movieService;
     private readonly IRoomService _roomService;
-    private readonly IProjectionTypeService _projectionTypeService;
+    private readonly ILookupService<ProjectionType> _projectionTypeService;
 
-    public ScreeningController(IScreeningService screeningService, IMovieService movieService, IRoomService roomService, IProjectionTypeService projectionTypeService)
+    public ScreeningController(IScreeningService screeningService, IMovieService movieService, IRoomService roomService, ILookupService<ProjectionType> projectionTypeService)
     {
         _screeningService = screeningService;
         _movieService = movieService;
