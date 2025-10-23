@@ -134,10 +134,7 @@ public class ScreeningController : ControllerBase
             return NotFound($"Room with ID {screening.RoomId} not found.");
 
         // Add movie duration to screening datetime
-        if (screening.EndTime == null)
-        {
-            screening.EndTime = screening.StartTime.AddMinutes(movie.Duration);
-        }
+        screening.EndTime = screening.StartTime.AddMinutes(movie.Duration);
 
         return null;
     }

@@ -67,8 +67,7 @@ public class ScreeningControllerTests
         {
             MovieId = movie.Id,
             RoomId = room.Id,
-            StartTime = DateTime.Now,
-            Price = 30.0f
+            StartTime = DateTime.Now
         };
 
         var result = controller.Create(screening);
@@ -89,8 +88,7 @@ public class ScreeningControllerTests
         {
             MovieId = 999,
             RoomId = room.Id,
-            StartTime = DateTime.Now,
-            Price = 25
+            StartTime = DateTime.Now
         };
 
         var result = controller.Create(screening);
@@ -108,8 +106,7 @@ public class ScreeningControllerTests
         {
             MovieId = movie.Id,
             RoomId = room.Id,
-            StartTime = DateTime.Now,
-            Price = 40
+            StartTime = DateTime.Now
         };
 
         controller.Create(screening);
@@ -139,18 +136,17 @@ public class ScreeningControllerTests
         {
             MovieId = movie.Id,
             RoomId = room.Id,
-            StartTime = DateTime.Now,
-            Price = 50
+            StartTime = DateTime.Now
         };
         controller.Create(screening);
 
-        screening.Price = 60;
+        screening.StartTime = screening.StartTime.AddHours(2);
         var result = controller.Update(screening.Id, screening);
 
         Assert.IsType<NoContentResult>(result);
 
         var updated = controller.GetById(screening.Id).Value!;
-        Assert.Equal(60, updated.Price);
+        Assert.Equal(screening.StartTime, updated.StartTime);
     }
 
     [Fact]
@@ -163,8 +159,7 @@ public class ScreeningControllerTests
             Id = 123,
             MovieId = movie.Id,
             RoomId = room.Id,
-            StartTime = DateTime.Now,
-            Price = 25
+            StartTime = DateTime.Now
         };
 
         var result = controller.Update(123, screening);
@@ -181,8 +176,7 @@ public class ScreeningControllerTests
         {
             MovieId = movie.Id,
             RoomId = room.Id,
-            StartTime = DateTime.Now,
-            Price = 45
+            StartTime = DateTime.Now
         };
         controller.Create(screening);
 
@@ -198,8 +192,8 @@ public class ScreeningControllerTests
     {
         var controller = CreateControllerWithSeededData(out var movie, out var room);
 
-        var s1 = new Screening { MovieId = movie.Id, RoomId = room.Id, StartTime = DateTime.Now, Price = 20 };
-        var s2 = new Screening { MovieId = movie.Id, RoomId = room.Id, StartTime = DateTime.Now.AddHours(3), Price = 20 };
+        var s1 = new Screening { MovieId = movie.Id, RoomId = room.Id, StartTime = DateTime.Now };
+        var s2 = new Screening { MovieId = movie.Id, RoomId = room.Id, StartTime = DateTime.Now.AddHours(3) };
         controller.Create(s1);
         controller.Create(s2);
 
@@ -220,8 +214,7 @@ public class ScreeningControllerTests
         {
             MovieId = movie.Id,
             RoomId = room.Id,
-            StartTime = DateTime.Now,
-            Price = 20
+            StartTime = DateTime.Now
         };
         controller.Create(s1);
 
@@ -229,8 +222,7 @@ public class ScreeningControllerTests
         {
             MovieId = movie.Id,
             RoomId = room.Id,
-            StartTime = s1.StartTime.AddMinutes(30),
-            Price = 20
+            StartTime = s1.StartTime.AddMinutes(30)
         };
 
         var ex = Assert.Throws<InvalidOperationException>(() => controller.Create(s2));

@@ -17,10 +17,6 @@ public class Screening
 
     public string? Language { get; set; }
 
-    [Required]
-    [DataType(DataType.Currency)]
-    public float Price { get; set; }
-
     public int RoomId { get; set; }
     public Room? Room { get; set; }
 

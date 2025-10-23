@@ -54,8 +54,5 @@ public class ScreeningRepository : IScreeningRepository
 
         if (screening.StartTime >= screening.EndTime)
             throw new ArgumentException("EndTime must be after StartTime.");
-
-        if (screening.Price <= 0)
-            throw new ArgumentException("Price must be greater than zero.");
     }
 }
