@@ -31,7 +31,7 @@ public class SeatControllerTests
         context.Cinemas.Add(cinema);
         context.SaveChanges();
 
-        var room = new Room { Name = "Room 1", Capacity = 20, CinemaId = cinema.Id };
+        var room = new Room { Name = "Room 1", CinemaId = cinema.Id };
         context.Rooms.Add(room);
         context.SaveChanges();
 

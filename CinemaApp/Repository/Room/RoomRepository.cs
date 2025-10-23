@@ -37,9 +37,6 @@ public class RoomRepository : IRoomRepository
         if (!string.IsNullOrEmpty(room.Name))
             existingRoom.Name = room.Name;
 
-        if (room.Capacity > 0)
-            existingRoom.Capacity = room.Capacity;
-
         existingRoom.CinemaId = room.CinemaId;
 
         _context.SaveChanges();

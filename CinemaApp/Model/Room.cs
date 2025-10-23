@@ -10,8 +10,7 @@ public class Room
     [Required]
     public string Name { get; set; } = null!;
 
-    [Range(1, 500)]
-    public int Capacity { get; set; }
+    public int Capacity => Seats.Count;
 
     public int CinemaId { get; set; }
     public Cinema? Cinema { get; set; }

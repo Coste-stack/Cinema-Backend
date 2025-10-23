@@ -32,8 +32,8 @@ public class RoomControllerTests
         context.Cinemas.Add(cinema);
         context.SaveChanges();
 
-        var room1 = new Room { Name = "Room A", Capacity = 150, CinemaId = cinema.Id };
-        var room2 = new Room { Name = "Room B", Capacity = 200, CinemaId = cinema.Id };
+        var room1 = new Room { Name = "Room A", CinemaId = cinema.Id };
+        var room2 = new Room { Name = "Room B", CinemaId = cinema.Id };
 
         context.Rooms.AddRange(room1, room2);
         context.SaveChanges();
@@ -86,7 +86,7 @@ public class RoomControllerTests
     {
         var controller = CreateControllerWithSeededData();
 
-        var room = new Room { Name = "Room C", Capacity = 120, CinemaId = 1 };
+        var room = new Room { Name = "Room C", CinemaId = 1 };
 
         var result = controller.Create(room);
 
@@ -101,7 +101,7 @@ public class RoomControllerTests
     {
         var controller = CreateControllerWithSeededData();
 
-        var room = new Room { Name = "Room D", Capacity = 80 };
+        var room = new Room { Name = "Room D" };
 
         var result = controller.Create(1, room);
 
@@ -116,7 +116,7 @@ public class RoomControllerTests
     {
         var controller = CreateControllerWithSeededData();
 
-        var room = new Room { Id = 1, Name = "Room A+", Capacity = 180, CinemaId = 1 };
+        var room = new Room { Id = 1, Name = "Room A+", CinemaId = 1 };
 
         var result = controller.Update(1, room);
 

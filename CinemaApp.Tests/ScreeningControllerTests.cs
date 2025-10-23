@@ -29,7 +29,7 @@ public class ScreeningControllerTests
 
         // Seed movie and room
         movie = new Movie { Title = "Inception", Duration = 120, Genre = "Sci-Fi" };
-        room = new Room { Name = "Room 1", Capacity = 100 };
+        room = new Room { Name = "Room 1" };
         context.Movies.Add(movie);
         context.Rooms.Add(room);
         context.SaveChanges();

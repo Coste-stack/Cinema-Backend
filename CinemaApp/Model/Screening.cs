@@ -28,6 +28,7 @@ public class Screening
     public Movie? Movie { get; set; }
 }
 
+// TODO: Convert to separate table
 public enum ProjectionType
 {
     [Description("3D")]

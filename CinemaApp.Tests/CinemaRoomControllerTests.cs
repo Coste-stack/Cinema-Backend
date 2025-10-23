@@ -60,8 +60,7 @@ namespace CinemaApp.Tests
             // Act
             var result = roomController.Create(1, new Room
             {
-                Name = "Room 1",
-                Capacity = 150
+                Name = "Room 1"
             });
 
             // Assert
@@ -78,8 +77,7 @@ namespace CinemaApp.Tests
 
             var result = roomController.Create(999, new Room
             {
-                Name = "Invalid Room",
-                Capacity = 100
+                Name = "Invalid Room"
             });
 
             Assert.IsType<NotFoundObjectResult>(result);
@@ -91,8 +89,8 @@ namespace CinemaApp.Tests
             var (cinemaController, roomController) = CreateControllersWithSeedData();
 
             // Add rooms to cinema 1
-            roomController.Create(1, new Room { Name = "Room A", Capacity = 100 });
-            roomController.Create(1, new Room { Name = "Room B", Capacity = 200 });
+            roomController.Create(1, new Room { Name = "Room A" });
+            roomController.Create(1, new Room { Name = "Room B" });
 
             // Retrieve cinema (ensure cinema service/Get returns Cinema with rooms loaded)
             var result = cinemaController.Get(1);
@@ -109,7 +107,7 @@ namespace CinemaApp.Tests
         {
             var (cinemaController, roomController) = CreateControllersWithSeedData();
 
-            roomController.Create(1, new Room { Name = "Room X", Capacity = 150 });
+            roomController.Create(1, new Room { Name = "Room X" });
 
             var roomResult = roomController.GetAll();
             var rooms = Assert.IsType<List<Room>>(roomResult.Value);
@@ -123,8 +121,8 @@ namespace CinemaApp.Tests
         {
             var (cinemaController, roomController) = CreateControllersWithSeedData();
 
-            roomController.Create(1, new Room { Name = "Room Y", Capacity = 120 });
-            roomController.Create(1, new Room { Name = "Room Z", Capacity = 220 });
+            roomController.Create(1, new Room { Name = "Room Y" });
+            roomController.Create(1, new Room { Name = "Room Z" });
 
             var beforeDelete = roomController.GetAll().Value!;
             Assert.True(beforeDelete.Count >= 2);
