@@ -8,14 +8,13 @@ public class Ticket
     public int Id { get; set; }
 
     // TODO: remove bookingTime - move it to booking (parent) table
-    [Required]
-    public DateTime BookingTime { get; set; }
+    // [Required]
+    // public DateTime BookingTime { get; set; }
 
     // TODO: remove screening - move it to booking (parent) table
-    public int ScreeningId { get; set; }
-    public Screening? Screening { get; set; }
+    // public int ScreeningId { get; set; }
+    // public Screening? Screening { get; set; }
 
-    [Required]
     public int PersonTypeId { get; set; }
     public PersonType? PersonType { get; set; }
 

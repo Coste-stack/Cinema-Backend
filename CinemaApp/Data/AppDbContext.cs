@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<Room> Rooms { get; set; }
     public DbSet<Seat> Seats { get; set; }
     public DbSet<Screening> Screenings { get; set; }
+    public DbSet<Ticket> Tickets { get; set; }
 
     public DbSet<ProjectionType> ProjectionTypes { get; set; }
     public DbSet<SeatType> SeatTypes { get; set; }
