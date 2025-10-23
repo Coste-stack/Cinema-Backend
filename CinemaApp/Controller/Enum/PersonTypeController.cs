@@ -6,7 +6,7 @@ namespace CinemaApp.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class SeatTypeController : LookupController<SeatType>
+public class PersonTypeController : LookupController<PersonType>
 {
-    public SeatTypeController(ILookupService<SeatType> service) : base(service) { }
+    public PersonTypeController(ILookupService<PersonType> service) : base(service) { }
 }

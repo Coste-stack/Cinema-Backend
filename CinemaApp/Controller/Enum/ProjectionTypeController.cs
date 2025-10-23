@@ -6,7 +6,7 @@ namespace CinemaApp.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ProjectionTypesController : LookupController<ProjectionType>
+public class ProjectionTypeController : LookupController<ProjectionType>
 {
-    public ProjectionTypesController(ILookupService<ProjectionType> service) : base(service) { }
+    public ProjectionTypeController(ILookupService<ProjectionType> service) : base(service) { }
 }

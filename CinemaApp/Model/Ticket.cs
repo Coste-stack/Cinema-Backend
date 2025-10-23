@@ -15,8 +15,10 @@ public class Ticket
     public int ScreeningId { get; set; }
     public Screening? Screening { get; set; }
 
-    // TODO: add personTypeId and seatId
-    
+    [Required]
+    public int PersonTypeId { get; set; }
+    public PersonType? PersonType { get; set; }
+
     // TODO: add ticketPriceId
 
     public int SeatId { get; set; }
