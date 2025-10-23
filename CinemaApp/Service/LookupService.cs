@@ -3,6 +3,15 @@ using CinemaApp.Repository;
 
 namespace CinemaApp.Service;
 
+public interface ILookupService<T> where T : LookupEntity
+{
+    List<T> GetAll();
+    T? GetById(int id);
+    void Create(T entity);
+    void Update(T entity);
+    void Delete(int id);
+}
+
 public class LookupService<T> : ILookupService<T> where T : LookupEntity
 {
     private readonly ILookupRepository<T> _repository;

@@ -3,6 +3,15 @@ using CinemaApp.Repository;
 
 namespace CinemaApp.Service;
 
+public interface ISeatService
+{
+    List<Seat> GetAll();
+    Seat? Get(int id);
+    void AddRange(IEnumerable<Seat> seats);
+    void Update(Seat seat);
+    void Delete(int id);
+}
+
 public class SeatService : ISeatService
 {
     private readonly ISeatRepository _repository;
@@ -23,7 +32,7 @@ public class SeatService : ISeatService
     {
         _repository.AddRange(seats);
     }
-    
+
     public void Update(Seat seat)
     {
         _repository.Update(seat);

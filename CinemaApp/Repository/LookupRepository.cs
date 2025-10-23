@@ -4,11 +4,20 @@ using CinemaApp.Model;
 
 namespace CinemaApp.Repository;
 
+public interface ILookupRepository<T> where T : LookupEntity
+{
+    IEnumerable<T> GetAll();
+    T? GetById(int id);
+    void Add(T entity);
+    void Update(T entity);
+    void Delete(int id);
+}
+
 public class LookupRepository<T> : ILookupRepository<T> where T : LookupEntity
 {
     private readonly AppDbContext _context;
 
-    public LookupRepository(AppDbContext context) =>_context = context;
+    public LookupRepository(AppDbContext context) => _context = context;
 
     public IEnumerable<T> GetAll()
     {

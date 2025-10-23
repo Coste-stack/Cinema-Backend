@@ -3,6 +3,15 @@ using CinemaApp.Repository;
 
 namespace CinemaApp.Service;
 
+public interface IScreeningService
+{
+    List<Screening> GetAll();
+    Screening? Get(int id);
+    void Add(Screening screening);
+    void Delete(int id);
+    void Update(Screening screening);
+}
+
 public class ScreeningService : IScreeningService
 {
     private readonly IScreeningRepository _repository;
@@ -17,12 +26,12 @@ public class ScreeningService : IScreeningService
     public Screening? Get(int id)
     {
         return _repository.GetById(id);
-    } 
+    }
 
     public void Add(Screening screening)
     {
         CheckOverlappingScreenings(screening);
-        
+
         _repository.Add(screening);
     }
 

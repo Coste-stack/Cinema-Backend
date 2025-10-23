@@ -4,6 +4,15 @@ using CinemaApp.Data;
 
 namespace CinemaApp.Repository;
 
+public interface IMovieRepository
+{
+    List<Movie> GetAll();
+    Movie? GetById(int id);
+    void Add(Movie movie);
+    void Update(Movie movie);
+    void Delete(int id);
+}
+
 public class MovieRepository : IMovieRepository
 {
     private readonly AppDbContext _context;

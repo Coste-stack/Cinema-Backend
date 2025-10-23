@@ -3,6 +3,15 @@ using CinemaApp.Repository;
 
 namespace CinemaApp.Service;
 
+public interface ICinemaService
+{
+    List<Cinema> GetAll();
+    Cinema? Get(int id);
+    void Add(Cinema cinema);
+    void Delete(int id);
+    void Update(Cinema cinema);
+}
+
 public class CinemaService : ICinemaService
 {
     private readonly ICinemaRepository _repository;
@@ -17,7 +26,7 @@ public class CinemaService : ICinemaService
     public Cinema? Get(int id)
     {
         return _repository.GetById(id);
-    } 
+    }
 
     public void Add(Cinema cinema)
     {

@@ -4,6 +4,15 @@ using CinemaApp.Data;
 
 namespace CinemaApp.Repository;
 
+public interface ISeatRepository
+{
+    List<Seat> GetAll();
+    Seat? GetById(int id);
+    void AddRange(IEnumerable<Seat> seats);
+    void Update(Seat seat);
+    void Delete(int id);
+}
+
 public class SeatRepository : ISeatRepository
 {
     private readonly AppDbContext _context;
@@ -47,12 +56,12 @@ public class SeatRepository : ISeatRepository
         _context.Seats.Remove(seat);
         _context.SaveChanges();
     }
-    
+
     private void Validate(Seat seat)
     {
         if (!Enum.IsDefined(seat.Status))
             throw new ArgumentException($"Invalid seat status: {seat.Status}");
-        
+
         if (seat.SeatTypeId <= 0)
             throw new ArgumentException("SeatTypeId must be specified.");
     }

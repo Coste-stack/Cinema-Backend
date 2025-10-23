@@ -3,6 +3,15 @@ using CinemaApp.Repository;
 
 namespace CinemaApp.Service;
 
+public interface IMovieService
+{
+    List<Movie> GetAll();
+    Movie? Get(int id);
+    void Add(Movie movie);
+    void Delete(int id);
+    void Update(Movie movie);
+}
+
 public class MovieService : IMovieService
 {
     private readonly IMovieRepository _repository;
@@ -17,7 +26,7 @@ public class MovieService : IMovieService
     public Movie? Get(int id)
     {
         return _repository.GetById(id);
-    } 
+    }
 
     public void Add(Movie movie)
     {
