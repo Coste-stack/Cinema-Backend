@@ -27,7 +27,7 @@ public class SeatController : ControllerBase
     }
 
     [HttpPost("room/{roomId}/generate")]
-    public IActionResult GenerateSeats(int roomId, [FromQuery] int rows = 5, [FromQuery] int seatsPerRow = 10)
+    public IActionResult GenerateSeats(int roomId, [FromQuery] int rows = 5, [FromQuery] int seatsPerRow = 10, [FromQuery] int seatTypeId = 1)
     {
         Room? room = _roomService.Get(roomId);
         if (room == null) return NotFound($"Cinema with ID {roomId} not found.");
@@ -41,7 +41,8 @@ public class SeatController : ControllerBase
                 {
                     RoomId = roomId,
                     Row = row.ToString(),
-                    Number = number
+                    Number = number,
+                    SeatTypeId = seatTypeId
                 });
             }
         }

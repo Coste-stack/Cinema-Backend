@@ -19,6 +19,7 @@ public class AppDbContext : DbContext
     public DbSet<Screening> Screenings { get; set; }
 
     public DbSet<ProjectionType> ProjectionTypes { get; set; }
+    public DbSet<SeatType> SeatTypes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -50,6 +51,17 @@ public class AppDbContext : DbContext
             .HasForeignKey(s => s.RoomId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Seed SeatType table
+        modelBuilder.Entity<SeatType>().HasData(
+            new SeatType { Id = 1, Name = "Regular" },
+            new SeatType { Id = 2, Name = "VIP" }
+        );
+
+        // Seed ProjectionType table
+        modelBuilder.Entity<ProjectionType>().HasData(
+            new ProjectionType { Id = 1, Name = "2D" },
+            new ProjectionType { Id = 2, Name = "3D" }
+        );
 
         base.OnModelCreating(modelBuilder);
     }

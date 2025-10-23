@@ -2,7 +2,6 @@
 using CinemaApp.Service;
 using CinemaApp.Controller;
 using CinemaApp.Data;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
@@ -26,7 +25,7 @@ public class SeatControllerTests
     {
         var context = CreateTestDbContext();
 
-        // Seed a room
+        // Seed a cinema and a room
         var cinema = new Cinema { Name = "Cinema Galaxy", Address = "Main Street 10", City = "Warsaw" };
         context.Cinemas.Add(cinema);
         context.SaveChanges();
@@ -35,9 +34,14 @@ public class SeatControllerTests
         context.Rooms.Add(room);
         context.SaveChanges();
 
+        // Seed a SeatType
+        var seatType = new SeatType { Name = "Regular" };
+        context.SeatTypes.Add(seatType);
+        context.SaveChanges();
+
         // Seed seats
-        var seat1 = new Seat { RoomId = room.Id, Row = "A", Number = 1 };
-        var seat2 = new Seat { RoomId = room.Id, Row = "A", Number = 2 };
+        var seat1 = new Seat { RoomId = room.Id, Row = "A", Number = 1, SeatTypeId = seatType.Id };
+        var seat2 = new Seat { RoomId = room.Id, Row = "A", Number = 2, SeatTypeId = seatType.Id };
         context.Seats.AddRange(seat1, seat2);
         context.SaveChanges();
 
@@ -51,13 +55,17 @@ public class SeatControllerTests
     public void GetByRoom_ReturnsSeatsForRoom()
     {
         var controller = CreateControllerWithSeededData();
-
         var roomId = 1;
+
         var result = controller.GetByRoom(roomId);
 
         var seats = Assert.IsType<List<Seat>>(result.Value);
         Assert.Equal(2, seats.Count);
-        Assert.All(seats, s => Assert.Equal(roomId, s.RoomId));
+        Assert.All(seats, s =>
+        {
+            Assert.Equal(roomId, s.RoomId);
+            Assert.True(s.SeatTypeId > 0);
+        });
     }
 
     [Fact]
@@ -74,14 +82,19 @@ public class SeatControllerTests
     public void GenerateSeats_CreatesSeats_ForRoom()
     {
         var controller = CreateControllerWithSeededData();
+        var seatTypeId = 1; // assuming seeded SeatType has Id = 1
 
-        var result = controller.GenerateSeats(1, rows: 2, seatsPerRow: 3);
+        var result = controller.GenerateSeats(roomId: 1, rows: 2, seatsPerRow: 3, seatTypeId: seatTypeId);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         var seats = Assert.IsType<List<Seat>>(okResult.Value);
 
         Assert.Equal(2 * 3, seats.Count);
-        Assert.All(seats, s => Assert.Equal(1, s.RoomId));
+        Assert.All(seats, s =>
+        {
+            Assert.Equal(1, s.RoomId);
+            Assert.Equal(seatTypeId, s.SeatTypeId);
+        });
     }
 
     [Fact]
@@ -89,7 +102,7 @@ public class SeatControllerTests
     {
         var controller = CreateControllerWithSeededData();
 
-        var result = controller.GenerateSeats(999);
+        var result = controller.GenerateSeats(999, rows: 1, seatsPerRow: 1, seatTypeId: 1);
 
         Assert.IsType<NotFoundObjectResult>(result);
     }
@@ -102,8 +115,8 @@ public class SeatControllerTests
         var result = controller.Delete(1);
         Assert.IsType<NoContentResult>(result);
 
-        var check = controller.GetByRoom(1).Value!;
-        Assert.DoesNotContain(check, s => s.Id == 1);
+        var remainingSeats = controller.GetByRoom(1).Value!;
+        Assert.DoesNotContain(remainingSeats, s => s.Id == 1);
     }
 
     [Fact]
@@ -112,7 +125,6 @@ public class SeatControllerTests
         var controller = CreateControllerWithSeededData();
 
         var result = controller.Delete(999);
-
         Assert.IsType<NotFoundObjectResult>(result);
     }
 

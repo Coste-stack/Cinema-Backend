@@ -52,5 +52,8 @@ public class SeatRepository : ISeatRepository
     {
         if (!Enum.IsDefined(seat.Status))
             throw new ArgumentException($"Invalid seat status: {seat.Status}");
+        
+        if (seat.SeatTypeId <= 0)
+            throw new ArgumentException("SeatTypeId must be specified.");
     }
 }

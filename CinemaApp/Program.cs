@@ -28,6 +28,7 @@ builder.Services.AddScoped<ISeatRepository, SeatRepository>();
 builder.Services.AddScoped<IMovieRepository, MovieRepository>();
 
 builder.Services.AddScoped<ILookupRepository<ProjectionType>, LookupRepository<ProjectionType>>();
+builder.Services.AddScoped<ILookupRepository<SeatType>, LookupRepository<SeatType>>();
 
 // Register services
 builder.Services.AddScoped<ICinemaService, CinemaService>();
@@ -36,6 +37,7 @@ builder.Services.AddScoped<ISeatService, SeatService>();
 builder.Services.AddScoped<IMovieService, MovieService>();
 
 builder.Services.AddScoped<ILookupService<ProjectionType>, LookupService<ProjectionType>>();
+builder.Services.AddScoped<ILookupService<SeatType>, LookupService<SeatType>>();
 
 var app = builder.Build();
 

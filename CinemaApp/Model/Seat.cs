@@ -15,6 +15,11 @@ public class Seat
     public int Number { get; set; }
 
     [Required]
+    public int SeatTypeId { get; set; }
+    public SeatType? SeatType { get; set; }
+
+    // TODO: Remove status - change to fit screening time
+    [Required]
     public SeatStatus Status { get; set; } = SeatStatus.Available;
 
     public int RoomId { get; set; }
