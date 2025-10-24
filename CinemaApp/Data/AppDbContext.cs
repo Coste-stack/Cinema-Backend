@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<Room> Rooms { get; set; }
     public DbSet<Seat> Seats { get; set; }
     public DbSet<Screening> Screenings { get; set; }
+    public DbSet<Booking> Bookings { get; set; }
     public DbSet<Ticket> Tickets { get; set; }
 
     public DbSet<ProjectionType> ProjectionTypes { get; set; }
@@ -51,6 +52,18 @@ public class AppDbContext : DbContext
             .WithOne(s => s.Room)
             .HasForeignKey(s => s.RoomId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Booking(One) - Ticket(Many)
+        modelBuilder.Entity<Booking>()
+            .HasMany(b => b.Tickets)
+            .WithOne(t => t.Booking)
+            .HasForeignKey(t => t.BookingId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Index to ensure a seat is only used once per screening
+        modelBuilder.Entity<Ticket>()
+            .HasIndex(t => new { t.ScreeningId, t.SeatId })
+            .IsUnique();
 
         // Seed SeatType table
         modelBuilder.Entity<SeatType>().HasData(
