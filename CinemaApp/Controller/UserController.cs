@@ -16,14 +16,29 @@ public class UserController(IUserService service) : ControllerBase
         var users = _service.GetAll();
         return users.ToResponse();
     }
-        
+
 
     [HttpGet("{id:int}")]
-    public ActionResult<UserResponseDTO> Get(int id)
+    public ActionResult<UserResponseDTO> GetById(int id)
     {
         var user = _service.Get(id);
         if (user == null) return NotFound();
         return user.ToResponse();
+    }
+    
+    [HttpGet("email")]
+    public ActionResult<UserResponseDTO> GetByEmail(string email)
+    {
+        try
+        {
+            var user = _service.Get(email);
+            if (user == null) return NotFound();
+            return user.ToResponse();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     [HttpPost]
@@ -35,7 +50,7 @@ public class UserController(IUserService service) : ControllerBase
         {
             var user = _service.Add(dto);
             var response = user.ToResponse();
-            return CreatedAtAction(nameof(Get), new { id = user.Id }, response);
+            return CreatedAtAction(nameof(GetById), new { id = user.Id }, response);
         }
         catch (ArgumentException ex)
         {

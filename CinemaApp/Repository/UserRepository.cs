@@ -8,6 +8,7 @@ public interface IUserRepository
 {
     List<User> GetAll();
     User? GetById(int id);
+    User? GetByEmail(string email);
     User Add(User user);
     void Update(User user);
 
@@ -23,6 +24,13 @@ public class UserRepository : IUserRepository
     public List<User> GetAll() => _context.Users.ToList();
 
     public User? GetById(int id) => _context.Users.Find(id);
+
+    public User? GetByEmail(string email)
+    {
+        var lowered = email.ToLowerInvariant();
+        return _context.Users
+            .SingleOrDefault(u => u.Email.Equals(lowered, StringComparison.InvariantCultureIgnoreCase));
+    }
 
     public User Add(User user)
     {
@@ -40,7 +48,6 @@ public class UserRepository : IUserRepository
     public bool UserWithEmailExists(string email)
     {
         var lowered = email.ToLowerInvariant();
-
         return _context.Users
             .Any(u => u.Email.Equals(lowered, StringComparison.InvariantCultureIgnoreCase));
     }

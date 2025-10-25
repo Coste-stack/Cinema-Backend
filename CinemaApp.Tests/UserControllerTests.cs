@@ -67,12 +67,12 @@ public class UserControllerTests
     }
 
     [Fact]
-    public void Get_ReturnsUserResponseDto_WhenExists()
+    public void GetById_ReturnsUserResponseDto_WhenExists()
     {
         var controller = CreateControllerWithSeededData(out var context, out _);
         var existing = context.Users.First();
 
-        var result = controller.Get(existing.Id);
+        var result = controller.GetById(existing.Id);
 
         var userDto = Assert.IsType<UserResponseDTO>(result.Value);
         Assert.Equal(existing.Email, userDto.Email);
@@ -80,11 +80,35 @@ public class UserControllerTests
     }
 
     [Fact]
-    public void Get_ReturnsNotFound_WhenNotExists()
+    public void GetById_ReturnsNotFound_WhenNotExists()
     {
         var controller = CreateControllerWithSeededData(out _, out _);
 
-        var result = controller.Get(9999);
+        var result = controller.GetById(9999);
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public void GetByEmail_ReturnsUserResponseDto_WhenExists()
+    {
+        var controller = CreateControllerWithSeededData(out var context, out _);
+        var existing = context.Users.First();
+
+        var result = controller.GetByEmail(existing.Email);
+
+        var userDto = Assert.IsType<UserResponseDTO>(result.Value);
+        Assert.Equal(existing.Email, userDto.Email);
+        Assert.Equal(existing.Id, userDto.Id);
+    }
+
+
+    [Fact]
+    public void GetByEmail_ReturnsNotFound_WhenNotExists()
+    {
+        var controller = CreateControllerWithSeededData(out _, out _);
+
+        var result = controller.GetByEmail("aaabbb@example.com");
 
         Assert.IsType<NotFoundResult>(result.Result);
     }

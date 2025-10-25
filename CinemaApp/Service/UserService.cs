@@ -8,6 +8,7 @@ public interface IUserService
 {
     List<User> GetAll();
     User? Get(int id);
+    User? Get(string email);
     User Add(UserCreateDTO dto);
     void Update(int id, UserCreateDTO dto);
 }
@@ -32,6 +33,14 @@ public class UserService : IUserService
     public User? Get(int id)
     {
         return _repository.GetById(id);
+    }
+
+    public User? Get(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("Email not valid.");
+        
+        return _repository.GetByEmail(email);
     }
 
     public User Add(UserCreateDTO dto)
