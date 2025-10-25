@@ -48,8 +48,7 @@ public class BookingService : IBookingService
         {
             ScreeningId = dto.ScreeningId,
             BookingTime = dto.BookingTime,
-            BookingStatus = BookingStatus.Confirmed,
-            UserType = dto.UserType
+            BookingStatus = BookingStatus.Confirmed
         };
 
         // Create tickets and attach booking id

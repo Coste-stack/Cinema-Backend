@@ -19,9 +19,11 @@ public class AppDbContext : DbContext
     public DbSet<Screening> Screenings { get; set; }
     public DbSet<Booking> Bookings { get; set; }
     public DbSet<Ticket> Tickets { get; set; }
+    public DbSet<User> Users { get; set; }
 
     public DbSet<ProjectionType> ProjectionTypes { get; set; }
     public DbSet<SeatType> SeatTypes { get; set; }
+    public DbSet<PersonType> PersonTypes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -63,6 +65,18 @@ public class AppDbContext : DbContext
         // Index to ensure a seat is only used once per screening
         modelBuilder.Entity<Ticket>()
             .HasIndex(t => new { t.ScreeningId, t.SeatId })
+            .IsUnique();
+
+        // User(One) - Booking(Many)
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.Bookings)
+            .WithOne(b => b.User)
+            .HasForeignKey(b => b.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        // Add unique constraint to user email
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
             .IsUnique();
 
         // Seed SeatType table

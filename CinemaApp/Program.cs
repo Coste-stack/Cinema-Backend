@@ -2,47 +2,51 @@ using CinemaApp.Data;
 using CinemaApp.Model;
 using CinemaApp.Repository;
 using CinemaApp.Service;
-
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // --- Add services to the container
 
-builder.Services.AddOpenApi();
+var services = builder.Services;
+
+services.AddOpenApi();
 
 // Configure DbContext with Oracle connection string from appsettings.json
-builder.Services.AddDbContext<AppDbContext>(options =>
+services.AddDbContext<AppDbContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("OracleDb")));
 
-builder.Services.AddControllers()
+services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
     });;
 
 // Register repositories
-builder.Services.AddScoped<ICinemaRepository, CinemaRepository>();
-builder.Services.AddScoped<IRoomRepository, RoomRepository>();
-builder.Services.AddScoped<ISeatRepository, SeatRepository>();
-builder.Services.AddScoped<IMovieRepository, MovieRepository>();
-builder.Services.AddScoped<IBookingRepository, BookingRepository>();
-builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+services.AddScoped<ICinemaRepository, CinemaRepository>();
+services.AddScoped<IRoomRepository, RoomRepository>();
+services.AddScoped<ISeatRepository, SeatRepository>();
+services.AddScoped<IMovieRepository, MovieRepository>();
+services.AddScoped<IBookingRepository, BookingRepository>();
+services.AddScoped<ITicketRepository, TicketRepository>();
 
-builder.Services.AddScoped<ILookupRepository<ProjectionType>, LookupRepository<ProjectionType>>();
-builder.Services.AddScoped<ILookupRepository<SeatType>, LookupRepository<SeatType>>();
-builder.Services.AddScoped<ILookupRepository<PersonType>, LookupRepository<PersonType>>();
+services.AddScoped<ILookupRepository<ProjectionType>, LookupRepository<ProjectionType>>();
+services.AddScoped<ILookupRepository<SeatType>, LookupRepository<SeatType>>();
+services.AddScoped<ILookupRepository<PersonType>, LookupRepository<PersonType>>();
 
 // Register services
-builder.Services.AddScoped<ICinemaService, CinemaService>();
-builder.Services.AddScoped<IRoomService, RoomService>();
-builder.Services.AddScoped<ISeatService, SeatService>();
-builder.Services.AddScoped<IMovieService, MovieService>();
-builder.Services.AddScoped<IBookingService, BookingService>();
+services.AddScoped<ICinemaService, CinemaService>();
+services.AddScoped<IRoomService, RoomService>();
+services.AddScoped<ISeatService, SeatService>();
+services.AddScoped<IMovieService, MovieService>();
+services.AddScoped<IBookingService, BookingService>();
 
-builder.Services.AddScoped<ILookupService<ProjectionType>, LookupService<ProjectionType>>();
-builder.Services.AddScoped<ILookupService<SeatType>, LookupService<SeatType>>();
-builder.Services.AddScoped<ILookupService<PersonType>, LookupService<PersonType>>();
+services.AddScoped<ILookupService<ProjectionType>, LookupService<ProjectionType>>();
+services.AddScoped<ILookupService<SeatType>, LookupService<SeatType>>();
+services.AddScoped<ILookupService<PersonType>, LookupService<PersonType>>();
+
+services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 var app = builder.Build();
 
