@@ -3,11 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CinemaApp.Model;
 
-public class Screening
+public class Screening : EntityBase
 {
-    [Key]
-    public int Id { get; set; }
-
     [Required]
     public DateTime StartTime { get; set; }
 

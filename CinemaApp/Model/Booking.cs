@@ -2,11 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CinemaApp.Model;
 
-public class Booking
+public class Booking : EntityBase
 {
-    [Key]
-    public int Id { get; set; }
-
     public BookingStatus BookingStatus { get; set; } = BookingStatus.Pending;
 
     [Required]

@@ -93,7 +93,7 @@ namespace CinemaApp.Tests
             roomController.Create(1, new Room { Name = "Room B" });
 
             // Retrieve cinema (ensure cinema service/Get returns Cinema with rooms loaded)
-            var result = cinemaController.Get(1);
+            var result = cinemaController.GetById(1);
             var cinema = Assert.IsType<Cinema>(result.Value);
 
             Assert.NotNull(cinema.Rooms);
@@ -114,24 +114,6 @@ namespace CinemaApp.Tests
             var room = rooms.First();
 
             Assert.Equal(1, room.CinemaId);
-        }
-
-        [Fact]
-        public void DeleteCinema_ShouldAlsoRemoveRooms()
-        {
-            var (cinemaController, roomController) = CreateControllersWithSeedData();
-
-            roomController.Create(1, new Room { Name = "Room Y" });
-            roomController.Create(1, new Room { Name = "Room Z" });
-
-            var beforeDelete = roomController.GetAll().Value!;
-            Assert.True(beforeDelete.Count >= 2);
-
-            // Delete cinema
-            cinemaController.Delete(1);
-
-            var afterDelete = roomController.GetAll().Value!;
-            Assert.Empty(afterDelete);
         }
     }
 }

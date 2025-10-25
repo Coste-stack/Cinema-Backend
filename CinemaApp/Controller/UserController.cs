@@ -1,6 +1,7 @@
 using CinemaApp.Model;
 using CinemaApp.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CinemaApp.Controller;
 
@@ -39,6 +40,14 @@ public class UserController(IUserService service) : ControllerBase
         {
             return BadRequest(new { error = ex.Message });
         }
+        catch (DbUpdateException ex)
+        {
+            return Conflict(new { error = "Database constraint or update error.", details = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
+        }
     }
 
     [HttpPost]
@@ -56,7 +65,14 @@ public class UserController(IUserService service) : ControllerBase
         {
             return BadRequest(new { error = ex.Message });
         }
-        
+        catch (DbUpdateException ex)
+        {
+            return Conflict(new { error = "Database constraint or update error.", details = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
+        }
     }
 
     [HttpPut("{id:int}")]

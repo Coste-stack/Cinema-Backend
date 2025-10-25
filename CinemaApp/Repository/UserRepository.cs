@@ -1,6 +1,7 @@
 
 using CinemaApp.Model;
 using CinemaApp.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CinemaApp.Repository;
 
@@ -35,14 +36,32 @@ public class UserRepository : IUserRepository
     public User Add(User user)
     {
         _context.Users.Add(user);
-        _context.SaveChanges();
-        return user;
+        try
+        {
+            var affected = _context.SaveChanges();
+            if (affected == 0)
+                throw new InvalidOperationException("No rows affected when adding a user.");
+            return user;
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException("Database update failed when adding a user.", ex);
+        }
     }
 
     public void Update(User user)
     {
         _context.Users.Update(user);
-        _context.SaveChanges();
+        try
+        {
+            var affected = _context.SaveChanges();
+            if (affected == 0)
+                throw new InvalidOperationException("No rows affected when updating a user.");
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException("Database update failed when updating a user.", ex);
+        }
     }
     
     public bool UserWithEmailExists(string email)

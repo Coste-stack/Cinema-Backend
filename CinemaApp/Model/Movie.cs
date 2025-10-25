@@ -2,11 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CinemaApp.Model;
 
-public class Movie
+public class Movie : EntityBase
 {
-    [Key]
-    public int Id { get; set; }
-
     [Required]
     [StringLength(100)]
     public string? Title { get; set; }

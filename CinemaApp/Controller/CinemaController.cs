@@ -1,6 +1,8 @@
 using CinemaApp.Model;
+using CinemaApp.DTO;
 using CinemaApp.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CinemaApp.Controller;
 
@@ -11,46 +13,69 @@ public class CinemaController(ICinemaService service) : ControllerBase
     private readonly ICinemaService _service = service;
 
     [HttpGet]
-    public ActionResult<List<Cinema>> GetAll() =>
-        _service.GetAll();
-
-    [HttpGet("{id}")]
-    public ActionResult<Cinema> Get(int id)
+    public ActionResult<List<Cinema>> GetAll()
     {
-        var cinema = _service.Get(id);
+        return _service.GetAll();
+    }
+        
+    [HttpGet("{id}")]
+    public ActionResult<Cinema> GetById(int id)
+    {
+        var cinema = _service.GetById(id);
 
         if (cinema == null) return NotFound();
         return cinema;
     }
 
     [HttpPost]
-    public IActionResult Create([FromBody] Cinema cinema)
+    public ActionResult Create([FromBody] Cinema cinema)
     {
-        _service.Add(cinema);
-        return CreatedAtAction(nameof(Get), new { id = cinema.Id }, cinema);
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        try
+        {
+            var existing = _service.Add(cinema);
+            return CreatedAtAction(nameof(GetById), new { id = existing.Id }, existing);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            return Conflict(new { error = "Database constraint or update error.", details = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
+        }
     }
 
     [HttpPut("{id}")]
-    public IActionResult Update(int id, [FromBody] Cinema cinema)
+    public ActionResult Update(int id, [FromBody] Cinema cinema)
     {
-        if (id != cinema.Id)
-        return BadRequest();
-            
-        var existingCinema = _service.Get(id);
-        if(existingCinema == null) return NotFound();
-    
-        _service.Update(cinema);           
-        return NoContent();
-    }
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-    [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
-    {
-        var cinema = _service.Get(id);
-   
-        if (cinema == null) return NotFound();
-        
-        _service.Delete(id);
-        return NoContent();
+        try
+        {
+            _service.Update(id, cinema);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        } 
+        catch (DbUpdateException ex)
+        {
+            return Conflict(new { error = "Database constraint or update error.", details = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
+        }  
     }
 }

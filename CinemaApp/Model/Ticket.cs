@@ -2,11 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CinemaApp.Model;
 
-public class Ticket
+public class Ticket : EntityBase
 {
-    [Key]
-    public int Id { get; set; }
-
     public int PersonTypeId { get; set; }
     public PersonType? PersonType { get; set; }
 

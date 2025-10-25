@@ -34,7 +34,7 @@ public class RoomController : ControllerBase
     [HttpPost]
     public IActionResult Create([FromBody] Room room)
     {
-        Cinema? cinema = _cinemaService.Get(room.CinemaId);
+        Cinema? cinema = _cinemaService.GetById(room.CinemaId);
         if (cinema == null) 
             return NotFound($"Cinema with ID {room.CinemaId} not found.");
 
@@ -45,7 +45,7 @@ public class RoomController : ControllerBase
     [HttpPost("cinemas/{cinemaId}")]
     public IActionResult Create(int cinemaId, [FromBody] Room room)
     {
-        Cinema? cinema = _cinemaService.Get(cinemaId);
+        Cinema? cinema = _cinemaService.GetById(cinemaId);
         if (cinema == null) 
             return NotFound($"Cinema with ID {cinemaId} not found.");
 

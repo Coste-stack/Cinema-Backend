@@ -1,6 +1,7 @@
 
 using CinemaApp.Model;
 using CinemaApp.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CinemaApp.Repository;
 
@@ -8,9 +9,8 @@ public interface ICinemaRepository
 {
     List<Cinema> GetAll();
     Cinema? GetById(int id);
-    void Add(Cinema cinema);
+    Cinema Add(Cinema cinema);
     void Update(Cinema cinema);
-    void Delete(int id);
 }
 
 public class CinemaRepository : ICinemaRepository
@@ -23,35 +23,34 @@ public class CinemaRepository : ICinemaRepository
 
     public Cinema? GetById(int id) => _context.Cinemas.Find(id);
 
-    public void Add(Cinema cinema)
+    public Cinema Add(Cinema cinema)
     {
         _context.Cinemas.Add(cinema);
-        _context.SaveChanges();
-    }
-
-    public void Delete(int id)
-    {
-        var cinema = _context.Cinemas.Find(id);
-        if (cinema == null) return;
-
-        _context.Cinemas.Remove(cinema);
-        _context.SaveChanges();
+        try
+        {
+            var affected = _context.SaveChanges();
+            if (affected == 0)
+                throw new InvalidOperationException("No rows affected when adding a cinema.");
+            return cinema;
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException("Database update failed when adding a cinema.", ex);
+        }
     }
 
     public void Update(Cinema cinema)
     {
-        Cinema? existingCinema = _context.Cinemas.Find(cinema.Id);
-        if (existingCinema == null) return;
-
-        if (!string.IsNullOrEmpty(cinema.Name))
-            existingCinema.Name = cinema.Name;
-
-        if (!string.IsNullOrEmpty(cinema.Address))
-            existingCinema.Address = cinema.Address;
-
-        if (!string.IsNullOrEmpty(cinema.City))
-            existingCinema.City = cinema.City;
-
-        _context.SaveChanges();
+        _context.Cinemas.Update(cinema);
+        try
+        {
+            var affected = _context.SaveChanges();
+            if (affected == 0)
+                throw new InvalidOperationException("No rows affected when updating a cinema.");
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException("Database update failed when updating a cinema.", ex);
+        }
     }
 }

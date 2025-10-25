@@ -2,11 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CinemaApp.Model;
 
-public class Seat
+public class Seat : EntityBase
 {
-    [Key]
-    public int Id { get; set; }
-
     // TODO: add row and number constraint unique
     [Required]
     public string? Row { get; set; }

@@ -1,12 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CinemaApp.Model;
 
-public class Cinema
+public class Cinema : EntityBase
 {
-    [Key]
-    public int Id { get; set; }
-
     [Required, StringLength(100)]
     public string Name { get; set; } = null!;
 

@@ -6,10 +6,9 @@ namespace CinemaApp.Service;
 public interface ICinemaService
 {
     List<Cinema> GetAll();
-    Cinema? Get(int id);
-    void Add(Cinema cinema);
-    void Delete(int id);
-    void Update(Cinema cinema);
+    Cinema? GetById(int id);
+    Cinema Add(Cinema cinema);
+    void Update(int id, Cinema cinema);
 }
 
 public class CinemaService : ICinemaService
@@ -23,23 +22,39 @@ public class CinemaService : ICinemaService
         return _repository.GetAll().ToList();
     }
 
-    public Cinema? Get(int id)
+    public Cinema? GetById(int id)
     {
         return _repository.GetById(id);
     }
 
-    public void Add(Cinema cinema)
+    public Cinema Add(Cinema cinema)
     {
-        _repository.Add(cinema);
-    }
+        if (cinema == null)
+            throw new ArgumentException("Cinema data is required.");
 
-    public void Delete(int id)
-    {
-        _repository.Delete(id);
-    }
+        if (string.IsNullOrWhiteSpace(cinema.Name))
+            throw new ArgumentException("Name cannot be null or empty.");
 
-    public void Update(Cinema cinema)
+        if (string.IsNullOrWhiteSpace(cinema.Address))
+            throw new ArgumentException("Address cannot be null or empty.");
+
+        return _repository.Add(cinema);
+    }
+    
+    public void Update(int id, Cinema cinema)
     {
-        _repository.Update(cinema);
+        var existing = _repository.GetById(id);
+        if(existing == null) throw new KeyNotFoundException();
+
+        if (!string.IsNullOrWhiteSpace(cinema.Name))
+            existing.Name = cinema.Name.Trim();
+
+        if (!string.IsNullOrWhiteSpace(cinema.Address))
+            existing.Address = cinema.Address.Trim();
+
+        if (!string.IsNullOrWhiteSpace(cinema.City))
+            existing.City = cinema.City.Trim();
+
+        _repository.Update(existing);
     }
 }

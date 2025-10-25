@@ -2,11 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CinemaApp.Model;
 
-public class User
+public class User : EntityBase
 {
-    [Key]
-    public int Id { get; set; }
-
     public UserType UserType { get; set; }
 
     public DateTime CreatedAt { get; set; }

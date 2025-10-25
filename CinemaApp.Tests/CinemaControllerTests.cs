@@ -23,9 +23,9 @@ public class CinemaControllerTests
         return new AppDbContext(options);
     }
 
-    private static CinemaController CreateControllerWithSeededData()
+    private static CinemaController CreateControllerWithSeededData(out AppDbContext context)
     {
-        var context = CreateTestDbContext();
+        context = CreateTestDbContext();
 
         var cinema1 = new Cinema { Name = "Cinema Galaxy", Address = "Main Street 10", City = "Warsaw" };
         var cinema2 = new Cinema { Name = "MegaFilm", Address = "Broadway 15", City = "Krakow" };
@@ -33,41 +33,45 @@ public class CinemaControllerTests
         context.Cinemas.AddRange(cinema1, cinema2);
         context.SaveChanges();
 
-        ICinemaRepository repository = new CinemaRepository(context);
-        ICinemaService service = new CinemaService(repository);
-        return new CinemaController(service);
+        var repository = new CinemaRepository(context);
+        var service = new CinemaService(repository);
+        var controller = new CinemaController(service);
+        return controller;
     }
 
     [Fact]
     public void GetAll_ReturnsAllCinemas()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out var context);
 
         var result = controller.GetAll();
 
         var cinemas = Assert.IsType<List<Cinema>>(result.Value);
-        Assert.True(cinemas.Count >= 2);
+        Assert.Equal(2, cinemas.Count);
         Assert.Contains(cinemas, c => c.Name == "Cinema Galaxy");
+        Assert.Contains(cinemas, c => c.Name == "MegaFilm");
     }
 
     [Fact]
-    public void Get_ReturnsCinema_WhenExists()
+    public void GetById_ReturnsCinema_WhenExists()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out var context);
 
-        var result = controller.Get(1);
+        var existing = context.Cinemas.First();
+
+        var result = controller.GetById(existing.Id);
 
         var cinema = Assert.IsType<Cinema>(result.Value);
-        Assert.Equal(1, cinema.Id);
-        Assert.Equal("Cinema Galaxy", cinema.Name);
+        Assert.Equal(existing.Id, cinema.Id);
+        Assert.Equal(existing.Name, cinema.Name);
     }
 
     [Fact]
-    public void Get_ReturnsNotFound_WhenDoesNotExist()
+    public void GetById_ReturnsNotFound_WhenDoesNotExist()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out _);
 
-        var result = controller.Get(999);
+        var result = controller.GetById(9999);
 
         Assert.IsType<NotFoundResult>(result.Result);
     }
@@ -75,7 +79,7 @@ public class CinemaControllerTests
     [Fact]
     public void Create_AddsCinema_AndReturnsCreated()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out _);
 
         var cinema = new Cinema { Name = "Nova Cinema", Address = "New Street 5", City = "Lodz" };
 
@@ -87,46 +91,37 @@ public class CinemaControllerTests
     }
 
     [Fact]
+    public void Create_ReturnsBadRequest_WhenEmptyAddress()
+    {
+        var controller = CreateControllerWithSeededData(out _);
+
+        var cinema = new Cinema { Name = "Nova Cinema", Address = "", City = "Lodz" };
+
+        var result = controller.Create(cinema);
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
     public void Update_UpdatesCinema_WhenExists()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out var context);
+
+        var existing = context.Cinemas.First();
 
         var updated = new Cinema
         {
-            Id = 1,
             Name = "Cinema Galaxy Updated",
             Address = "Main Street 20",
             City = "Warsaw"
         };
 
-        var result = controller.Update(1, updated);
+        var result = controller.Update(existing.Id, updated);
 
         Assert.IsType<NoContentResult>(result);
 
-        var refreshed = controller.Get(1).Value!;
+        var refreshed = context.Cinemas.Find(existing.Id)!;
+        Assert.Equal(existing.Id, refreshed.Id);
         Assert.Equal("Cinema Galaxy Updated", refreshed.Name);
-    }
-
-    [Fact]
-    public void Delete_RemovesCinema_WhenExists()
-    {
-        var controller = CreateControllerWithSeededData();
-
-        var result = controller.Delete(1);
-
-        Assert.IsType<NoContentResult>(result);
-
-        var check = controller.Get(1).Result;
-        Assert.IsType<NotFoundResult>(check);
-    }
-
-    [Fact]
-    public void Delete_ReturnsNotFound_WhenDoesNotExist()
-    {
-        var controller = CreateControllerWithSeededData();
-
-        var result = controller.Delete(999);
-
-        Assert.IsType<NotFoundResult>(result);
+        Assert.Equal("Main Street 20", refreshed.Address);
     }
 }
