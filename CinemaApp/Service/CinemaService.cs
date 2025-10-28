@@ -6,7 +6,7 @@ namespace CinemaApp.Service;
 public interface ICinemaService
 {
     List<Cinema> GetAll();
-    Cinema? GetById(int id);
+    Cinema GetById(int id);
     Cinema Add(Cinema cinema);
     void Update(int id, Cinema cinema);
 }
@@ -22,9 +22,12 @@ public class CinemaService : ICinemaService
         return _repository.GetAll().ToList();
     }
 
-    public Cinema? GetById(int id)
+    public Cinema GetById(int id)
     {
-        return _repository.GetById(id);
+        var cinema = _repository.GetById(id);
+        if (cinema == null)
+            throw new KeyNotFoundException($"Cinema with ID {id} not found.");
+        return cinema;
     }
 
     public Cinema Add(Cinema cinema)

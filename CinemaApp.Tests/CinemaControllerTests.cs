@@ -73,7 +73,7 @@ public class CinemaControllerTests
 
         var result = controller.GetById(9999);
 
-        Assert.IsType<NotFoundResult>(result.Result);
+        Assert.IsType<NotFoundObjectResult>(result.Result);
     }
 
     [Fact]

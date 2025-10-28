@@ -21,9 +21,14 @@ public class CinemaController(ICinemaService service) : ControllerBase
     [HttpGet("{id}")]
     public ActionResult<Cinema> GetById(int id)
     {
-        var cinema = _service.GetById(id);
-        if (cinema == null) return NotFound();
-        return cinema;
+        try
+        {
+            return _service.GetById(id);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 
     [HttpPost]
