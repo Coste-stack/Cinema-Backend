@@ -38,25 +38,21 @@ namespace CinemaApp.Tests
             context.SaveChanges();
 
             // Set up dependencies
-            IScreeningRepository screeningRepo = new ScreeningRepository(context);
-            IScreeningService screeningService = new ScreeningService(screeningRepo);
-
-            IMovieRepository movieRepo = new MovieRepository(context);
-            IMovieService movieService = new MovieService(movieRepo);
-
-            IRoomRepository roomRepo = new RoomRepository(context);
-            IRoomService roomService = new RoomService(roomRepo);
-
             ILookupRepository<ProjectionType> projectionTypeRepo = new LookupRepository<ProjectionType>(context);
-            ILookupService<ProjectionType> projectionTypeService = new LookupService<ProjectionType>(projectionTypeRepo);
 
-            return new ScreeningController(screeningService, movieService, roomService, projectionTypeService);
+            IScreeningRepository screeningRepo = new ScreeningRepository(context);
+            IMovieRepository movieRepo = new MovieRepository(context);
+            IRoomRepository roomRepo = new RoomRepository(context);
+
+            IScreeningService screeningService = new ScreeningService(screeningRepo, movieRepo, roomRepo, projectionTypeRepo);
+
+            return new ScreeningController(screeningService);
         }
 
         [Fact]
         public void GetAll_ReturnsEmpty_WhenNoScreenings()
         {
-            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
+            var controller = CreateControllerWithSeededData(out _, out _, out _);
 
             var result = controller.GetAll();
 
@@ -91,7 +87,7 @@ namespace CinemaApp.Tests
         [Fact]
         public void Create_ReturnsNotFound_WhenProjectionTypeMissing()
         {
-            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
+            var controller = CreateControllerWithSeededData(out var movie, out var room, out _);
 
             var screening = new Screening
             {
@@ -134,11 +130,11 @@ namespace CinemaApp.Tests
         [Fact]
         public void GetById_ReturnsNotFound_WhenDoesNotExist()
         {
-            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
+            var controller = CreateControllerWithSeededData(out _, out _, out _);
 
             var result = controller.GetById(999);
 
-            Assert.IsType<NotFoundResult>(result.Result);
+            Assert.IsType<NotFoundObjectResult>(result.Result);
         }
 
         [Fact]
@@ -183,7 +179,7 @@ namespace CinemaApp.Tests
 
             var result = controller.Update(123, screening);
 
-            Assert.IsType<NotFoundResult>(result);
+            Assert.IsType<NotFoundObjectResult>(result);
         }
 
         [Fact]
@@ -205,7 +201,7 @@ namespace CinemaApp.Tests
             Assert.IsType<NoContentResult>(deleteResult);
 
             var check = controller.GetById(screening.Id).Result;
-            Assert.IsType<NotFoundResult>(check);
+            Assert.IsType<NotFoundObjectResult>(check);
         }
 
         [Fact]

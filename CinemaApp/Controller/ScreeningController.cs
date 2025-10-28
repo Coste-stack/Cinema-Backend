@@ -1,6 +1,7 @@
 using CinemaApp.Model;
 using CinemaApp.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CinemaApp.Controller;
 
@@ -8,140 +9,166 @@ namespace CinemaApp.Controller;
 [Route("[controller]")]
 public class ScreeningController : ControllerBase
 {
-    private readonly IScreeningService _screeningService;
-    private readonly IMovieService _movieService;
-    private readonly IRoomService _roomService;
-    private readonly ILookupService<ProjectionType> _projectionTypeService;
+    private readonly IScreeningService _service;
 
-    public ScreeningController(IScreeningService screeningService, IMovieService movieService, IRoomService roomService, ILookupService<ProjectionType> projectionTypeService)
+    public ScreeningController(IScreeningService service)
     {
-        _screeningService = screeningService;
-        _movieService = movieService;
-        _roomService = roomService;
-        _projectionTypeService = projectionTypeService;
+        _service = service;
     }
 
 
     [HttpGet]
-    public ActionResult<List<Screening>> GetAll() =>
-        _screeningService.GetAll();
+    public ActionResult<List<Screening>> GetAll()
+    {
+        return _service.GetAll();
+    }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public ActionResult<Screening> GetById(int id)
     {
-        Screening? screening = _screeningService.Get(id);
-        if (screening == null) return NotFound();
-
-        return screening;
+        try
+        {
+            return _service.GetById(id);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 
-    [HttpGet("movie/{movieId}")]
+    [HttpGet("movie/{movieId:int}")]
     public ActionResult<List<Screening>> GetByMovie(int movieId)
     {
-        Movie? movie = _movieService.GetById(movieId);
-        if (movie == null) return NotFound($"Movie {movieId} not found.");
-
-        return _screeningService.GetAll().Where(s => s.MovieId == movieId).ToList(); ;
+        try
+        {
+            return _service.GetByMovie(movieId);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 
-    [HttpGet("room/{roomId}")]
+    [HttpGet("room/{roomId:int}")]
     public ActionResult<List<Screening>> GetByRoom(int roomId)
     {
-        Room? room = _roomService.GetById(roomId);
-        if (room == null) return NotFound($"Room {roomId} not found.");
-
-        return _screeningService.GetAll().Where(s => s.RoomId == roomId).ToList(); ;
+        try
+        {
+            return _service.GetByRoom(roomId);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 
     [HttpPost]
-    public IActionResult Create([FromBody] Screening screening)
+    public ActionResult Create([FromBody] Screening screening)
     {
-        IActionResult? validateRes = Validate(screening);
-        if (validateRes != null) return validateRes;
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        _screeningService.Add(screening);
-        return CreatedAtAction(nameof(GetById), new { id = screening.Id }, screening);
+        try
+        {
+            var created = _service.Add(screening);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
+        }
     }
 
-    [HttpPut("{id}")]
-    public IActionResult Update(int id, [FromBody] Screening screening)
+    [HttpPut("{id:int}")]
+    public ActionResult Update(int id, [FromBody] Screening screening)
     {
-        if (id != screening.Id)
-        return BadRequest();
-            
-        Screening? existingScreening = _screeningService.Get(id);
-        if (existingScreening == null) return NotFound();
-        
-        IActionResult? validateRes = Validate(screening);
-        if (validateRes != null) return validateRes;
-    
-        _screeningService.Update(screening);           
-        return NoContent();
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        try
+        {
+            _service.Update(id, screening);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
+        }
     }
 
     [HttpDelete("{id}")]
-    public IActionResult DeleteById(int id)
+    public ActionResult DeleteById(int id)
     {
-        Screening? screening = _screeningService.Get(id);
-        if (screening == null) return NotFound();
-
-        _screeningService.Delete(id);
-        return NoContent();
-    }
-
-    [HttpDelete("movie/{movieId}")]
-    public IActionResult DeleteByMovie(int movieId)
-    {
-        Movie? movie = _movieService.GetById(movieId);
-        if (movie == null) return NotFound($"Movie {movieId} not found.");
-
-        List<Screening> screenings = _screeningService.GetAll().Where(s => s.MovieId == movieId).ToList();
-        if (screenings.Count == 0)
-            return NotFound($"No screenings found for movie {movieId}.");
-
-        foreach (Screening screening in screenings)
+        try
         {
-            _screeningService.Delete(screening.Id);
+            _service.Delete(id);
+            return NoContent();
         }
-
-        return NoContent();
-    }
-
-    [HttpDelete("room/{roomId}")]
-    public IActionResult DeleteByRoom(int roomId)
-    {
-        Room? room = _roomService.GetById(roomId);
-        if (room == null) return NotFound($"Room {roomId} not found.");
-
-        List<Screening> screenings = _screeningService.GetAll().Where(s => s.RoomId == roomId).ToList();
-        if (screenings.Count == 0)
-            return NotFound($"No screenings found for room {roomId}.");
-
-        foreach (Screening screening in screenings)
+        catch (KeyNotFoundException ex)
         {
-            _screeningService.Delete(screening.Id);
+            return NotFound(new { error = ex.Message });
         }
-
-        return NoContent();
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
+        } 
     }
-    
-    private IActionResult? Validate(Screening screening)
+
+    [HttpDelete("movie/{movieId:int}")]
+    public ActionResult DeleteByMovie(int movieId)
     {
-        ProjectionType? projectionType = _projectionTypeService.GetById(screening.ProjectionTypeId);
-        if (projectionType == null)
-            return NotFound($"ProjectionType with ID {screening.ProjectionTypeId} not found.");
+        try
+        {
+            _service.DeleteByMovie(movieId);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
+        } 
+    }
 
-        Movie? movie = _movieService.GetById(screening.MovieId);
-        if (movie == null)
-            return NotFound($"Movie with ID {screening.MovieId} not found.");
-            
-        Room? room = _roomService.GetById(screening.RoomId);
-        if (room == null)
-            return NotFound($"Room with ID {screening.RoomId} not found.");
-
-        // Add movie duration to screening datetime
-        screening.EndTime = screening.StartTime.AddMinutes(movie.Duration);
-
-        return null;
+    [HttpDelete("room/{roomId:int}")]
+    public ActionResult DeleteByRoom(int roomId)
+    {
+        try
+        {
+            _service.DeleteByRoom(roomId);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
+        } 
     }
 }
