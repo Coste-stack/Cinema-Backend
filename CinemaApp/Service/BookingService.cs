@@ -8,7 +8,7 @@ namespace CinemaApp.Service;
 public interface IBookingService
 {
     List<Booking> GetAll();
-    Booking? Get(int id);
+    Booking GetById(int id);
     Booking Create(BookingCreateDto dto);
 }
 
@@ -23,13 +23,24 @@ public class BookingService : IBookingService
         _ticketRepo = ticketRepo;
     }
 
-    public List<Booking> GetAll() => _bookingRepo.GetAll();
+    public List<Booking> GetAll()
+    {
+        return _bookingRepo.GetAll();
+    }
 
-    public Booking? Get(int id) => _bookingRepo.GetById(id);
+    public Booking GetById(int id)
+    {
+        var booking = _bookingRepo.GetById(id);
+        if (booking == null)
+            throw new KeyNotFoundException($"Booking with ID {id} not found.");
+        return booking;
+    }
 
     public Booking Create(BookingCreateDto dto)
     {
-        if (dto == null) throw new ArgumentException("Booking data is required.");
+        if (dto == null)
+            throw new ArgumentException("Booking data is required.");
+            
         if (dto.Tickets == null || dto.Tickets.Count == 0)
             throw new ArgumentException("At least one ticket is required.");
 
@@ -63,17 +74,6 @@ public class BookingService : IBookingService
             booking.Tickets.Add(ticket);
         }
 
-        // Persist changes
-        try
-        {
-            _bookingRepo.Add(booking);
-        }
-        catch (DbUpdateException dbEx)
-        {
-            throw new InvalidOperationException("One or more seats are already taken for that screening.", dbEx);
-        }
-
-        // Return booking with tickets
-        return _bookingRepo.GetById(booking.Id) ?? booking;
+        return _bookingRepo.Add(booking);
     }
 }

@@ -4,7 +4,7 @@ using CinemaApp.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace CinemaApp.Controllers
+namespace CinemaApp.Controller
 {
     [ApiController]
     [Route("[controller]")]
@@ -17,41 +17,43 @@ namespace CinemaApp.Controllers
         [HttpGet]
         public ActionResult<List<Booking>> GetAll()
         {
-            var bookings = _service.GetAll();
-            return Ok(bookings);
+            return _service.GetAll();
         }
 
         [HttpGet("{id:int}")]
-        public ActionResult<Booking> Get(int id)
+        public ActionResult<Booking> GetById(int id)
         {
-            var booking = _service.Get(id);
-            if (booking == null) return NotFound();
-            return Ok(booking);
+            try
+            {
+                return _service.GetById(id);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { error = ex.Message });
+            }
         }
 
         [HttpPost]
-        public IActionResult Create([FromBody] BookingCreateDto dto)
+        public ActionResult Create([FromBody] BookingCreateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             try
             {
                 var created = _service.Create(dto);
-                return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
+                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
             }
             catch (ArgumentException ex)
             {
-                // validation / missing reference
                 return BadRequest(new { message = ex.Message });
             }
-            catch (DbUpdateException ex) when (ex.Message.Contains("seat"))
+            catch (DbUpdateException ex)
             {
-                // seat already taken
                 return Conflict(new { message = ex.Message });
             }
-            catch (Exception)
+            catch (InvalidOperationException ex)
             {
-                return StatusCode(500, "An unexpected error occurred.");
+                return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
             }
         }
     }

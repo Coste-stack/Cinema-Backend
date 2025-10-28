@@ -9,7 +9,7 @@ public interface IBookingRepository
 {
     List<Booking> GetAll();
     Booking? GetById(int id);
-    void Add(Booking booking);
+    Booking Add(Booking booking);
 }
 
 public class BookingRepository : IBookingRepository
@@ -33,9 +33,23 @@ public class BookingRepository : IBookingRepository
             .FirstOrDefault(b => b.Id == id);
     }
 
-    public void Add(Booking booking)
+    public Booking Add(Booking booking)
     {
         _context.Bookings.Add(booking);
-        _context.SaveChanges();
+        try
+        {
+            var affected = _context.SaveChanges();
+            if (affected == 0)
+                throw new InvalidOperationException("No rows affected when adding a booking.");
+            return booking;
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException("Database update failed when adding a booking.", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Unexpected error when adding a booking.", ex);
+        }
     }
 }
