@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Xunit;
 using System.Collections.Generic;
 using System.Linq;
+using CinemaApp.Repository;
 
 namespace CinemaApp.Tests;
 
@@ -21,9 +22,9 @@ public class SeatControllerTests
         return new AppDbContext(options);
     }
 
-    private static SeatController CreateControllerWithSeededData()
+    private static SeatController CreateControllerWithSeededData(out AppDbContext context)
     {
-        var context = CreateTestDbContext();
+        context = CreateTestDbContext();
 
         // Seed a cinema and a room
         var cinema = new Cinema { Name = "Cinema Galaxy", Address = "Main Street 10", City = "Warsaw" };
@@ -45,22 +46,24 @@ public class SeatControllerTests
         context.Seats.AddRange(seat1, seat2);
         context.SaveChanges();
 
-        ISeatService seatService = new SeatService(new Repository.SeatRepository(context));
-        IRoomService roomService = new RoomService(new Repository.RoomRepository(context));
+        ISeatService seatService = new SeatService(new SeatRepository(context), new RoomRepository(context));
 
-        return new SeatController(seatService, roomService);
+        return new SeatController(seatService);
     }
 
     [Fact]
     public void GetByRoom_ReturnsSeatsForRoom()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out var context);
         var roomId = 1;
 
         var result = controller.GetByRoom(roomId);
 
         var seats = Assert.IsType<List<Seat>>(result.Value);
-        Assert.Equal(2, seats.Count);
+
+        var seatsInContext = context.Seats.Where(s => s.RoomId == roomId).ToList();
+
+        Assert.Equal(seatsInContext.Count, seats.Count);
         Assert.All(seats, s =>
         {
             Assert.Equal(roomId, s.RoomId);
@@ -71,7 +74,7 @@ public class SeatControllerTests
     [Fact]
     public void GetByRoom_ReturnsNotFound_WhenRoomDoesNotExist()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out _);
 
         var result = controller.GetByRoom(999);
 
@@ -81,18 +84,20 @@ public class SeatControllerTests
     [Fact]
     public void GenerateSeats_CreatesSeats_ForRoom()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out var context);
         var seatTypeId = 1; // assuming seeded SeatType has Id = 1
 
-        var result = controller.GenerateSeats(roomId: 1, rows: 2, seatsPerRow: 3, seatTypeId: seatTypeId);
+        var room = context.Rooms.First();
 
-        var okResult = Assert.IsType<OkObjectResult>(result);
+        var result = controller.AddSeats(roomId: room.Id, rows: 2, seatsPerRow: 3, seatTypeId: seatTypeId);
+
+        var okResult = Assert.IsType<CreatedAtActionResult>(result);
         var seats = Assert.IsType<List<Seat>>(okResult.Value);
 
         Assert.Equal(2 * 3, seats.Count);
         Assert.All(seats, s =>
         {
-            Assert.Equal(1, s.RoomId);
+            Assert.Equal(room.Id, s.RoomId);
             Assert.Equal(seatTypeId, s.SeatTypeId);
         });
     }
@@ -100,50 +105,31 @@ public class SeatControllerTests
     [Fact]
     public void GenerateSeats_ReturnsNotFound_WhenRoomDoesNotExist()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out _);
 
-        var result = controller.GenerateSeats(999, rows: 1, seatsPerRow: 1, seatTypeId: 1);
+        var result = controller.AddSeats(999, rows: 1, seatsPerRow: 1, seatTypeId: 1);
 
-        Assert.IsType<NotFoundObjectResult>(result);
-    }
-
-    [Fact]
-    public void Delete_RemovesSeat_WhenExists()
-    {
-        var controller = CreateControllerWithSeededData();
-
-        var result = controller.Delete(1);
-        Assert.IsType<NoContentResult>(result);
-
-        var remainingSeats = controller.GetByRoom(1).Value!;
-        Assert.DoesNotContain(remainingSeats, s => s.Id == 1);
-    }
-
-    [Fact]
-    public void Delete_ReturnsNotFound_WhenSeatDoesNotExist()
-    {
-        var controller = CreateControllerWithSeededData();
-
-        var result = controller.Delete(999);
         Assert.IsType<NotFoundObjectResult>(result);
     }
 
     [Fact]
     public void DeleteByRoom_RemovesAllSeatsInRoom()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out var context);
 
-        var result = controller.DeleteByRoom(1);
+        var room = context.Rooms.First();
+
+        var result = controller.DeleteByRoom(room.Id);
         Assert.IsType<NoContentResult>(result);
 
-        var seats = controller.GetByRoom(1).Value!;
+        var seats = controller.GetByRoom(room.Id).Value!;
         Assert.Empty(seats);
     }
 
     [Fact]
     public void DeleteByRoom_ReturnsNotFound_WhenRoomDoesNotExist()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out _);
 
         var result = controller.DeleteByRoom(999);
         Assert.IsType<NotFoundObjectResult>(result);

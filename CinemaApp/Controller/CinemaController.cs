@@ -22,7 +22,6 @@ public class CinemaController(ICinemaService service) : ControllerBase
     public ActionResult<Cinema> GetById(int id)
     {
         var cinema = _service.GetById(id);
-
         if (cinema == null) return NotFound();
         return cinema;
     }

@@ -5,42 +5,66 @@ namespace CinemaApp.Service;
 
 public interface ISeatService
 {
-    List<Seat> GetAll();
-    Seat? Get(int id);
-    void AddRange(IEnumerable<Seat> seats);
-    void Update(Seat seat);
-    void Delete(int id);
+    List<Seat> GetByRoom(int roomId);
+    List<Seat> AddRange(int roomId, int rows, int seatsPerRow, int seatTypeId);
+    void Delete(int roomId);
 }
 
 public class SeatService : ISeatService
 {
     private readonly ISeatRepository _repository;
+    private readonly IRoomRepository _roomRepository;
 
-    public SeatService(ISeatRepository repository) => _repository = repository;
-
-    public List<Seat> GetAll()
+    public SeatService(ISeatRepository repository, IRoomRepository roomRepository)
     {
-        return _repository.GetAll().ToList();
+        _repository = repository;
+        _roomRepository = roomRepository;
     }
 
-    public Seat? Get(int id)
+    public List<Seat> GetByRoom(int roomId)
     {
-        return _repository.GetById(id);
+        var room = _roomRepository.GetById(roomId);
+        if (room == null)
+            throw new KeyNotFoundException($"Room with ID {roomId} not found.");
+
+        return _repository.GetByRoom(roomId);
     }
 
-    public void AddRange(IEnumerable<Seat> seats)
+    public List<Seat> AddRange(int roomId, int rows, int seatsPerRow, int seatTypeId)
     {
-        _repository.AddRange(seats);
+        var existingRoom = _roomRepository.GetById(roomId);
+        if (existingRoom == null) 
+            throw new KeyNotFoundException($"Room with ID {roomId} not found.");
+
+        var seats= new List<Seat>();
+        for (char row = 'A'; row < 'A' + rows; row++)
+        {
+            for (int number = 1; number <= seatsPerRow; number++)
+            {
+                seats.Add(new Seat
+                {
+                    RoomId = roomId,
+                    Row = row.ToString(),
+                    Number = number,
+                    SeatTypeId = seatTypeId
+                });
+            }
+        }
+
+        return _repository.AddRange(seats);
     }
 
-    public void Update(Seat seat)
-    {
-        _repository.Update(seat);
-    }
 
-
-    public void Delete(int id)
+    public void Delete(int roomId)
     {
-        _repository.Delete(id);
+        var existingRoom = _roomRepository.GetById(roomId);
+        if (existingRoom == null) 
+            throw new KeyNotFoundException($"Room with ID {roomId} not found.");
+
+        var seats = _repository.GetByRoom(roomId);
+        if (seats.Count == 0) 
+            throw new KeyNotFoundException("No seats found for this room.");
+        
+        _repository.Delete(seats);
     }
 }

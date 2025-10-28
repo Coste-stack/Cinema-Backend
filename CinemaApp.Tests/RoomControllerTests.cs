@@ -23,9 +23,9 @@ public class RoomControllerTests
         return new AppDbContext(options);
     }
 
-    private static RoomController CreateControllerWithSeededData()
+    private static RoomController CreateControllerWithSeededData(out AppDbContext context)
     {
-        var context = CreateTestDbContext();
+        context = CreateTestDbContext();
 
         // Create a cinema to link rooms to
         var cinema = new Cinema { Name = "Cinema Galaxy", Address = "Main Street 10", City = "Warsaw" };
@@ -50,7 +50,7 @@ public class RoomControllerTests
     [Fact]
     public void GetAll_ReturnsAllRooms()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out var context);
 
         var result = controller.GetAll();
 
@@ -62,9 +62,9 @@ public class RoomControllerTests
     [Fact]
     public void Get_ReturnsRoom_WhenExists()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out var context);
 
-        var result = controller.Get(1);
+        var result = controller.GetById(1);
 
         var room = Assert.IsType<Room>(result.Value);
         Assert.Equal(1, room.Id);
@@ -74,9 +74,9 @@ public class RoomControllerTests
     [Fact]
     public void Get_ReturnsNotFound_WhenDoesNotExist()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out var context);
 
-        var result = controller.Get(999);
+        var result = controller.GetById(999);
 
         Assert.IsType<NotFoundResult>(result.Result);
     }
@@ -84,7 +84,7 @@ public class RoomControllerTests
     [Fact]
     public void Create_AddsRoom_AndReturnsCreated_WithCinemaIdInBody()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out var context);
 
         var room = new Room { Name = "Room C", CinemaId = 1 };
 
@@ -97,24 +97,9 @@ public class RoomControllerTests
     }
 
     [Fact]
-    public void Create_AddsRoom_UsingNestedEndpoint()
-    {
-        var controller = CreateControllerWithSeededData();
-
-        var room = new Room { Name = "Room D" };
-
-        var result = controller.Create(1, room);
-
-        var created = Assert.IsType<CreatedAtActionResult>(result);
-        var returnedRoom = Assert.IsType<Room>(created.Value);
-        Assert.Equal("Room D", returnedRoom.Name);
-        Assert.Equal(1, returnedRoom.CinemaId);
-    }
-
-    [Fact]
     public void Update_UpdatesRoom_WhenExists()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out var context);
 
         var room = new Room { Id = 1, Name = "Room A+", CinemaId = 1 };
 
@@ -122,27 +107,27 @@ public class RoomControllerTests
 
         Assert.IsType<NoContentResult>(result);
 
-        var updated = controller.Get(1).Value!;
+        var updated = controller.GetById(1).Value!;
         Assert.Equal("Room A+", updated.Name);
     }
 
     [Fact]
     public void Delete_RemovesRoom_WhenExists()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out var context);
 
         var result = controller.Delete(1);
 
         Assert.IsType<NoContentResult>(result);
 
-        var check = controller.Get(1).Result;
+        var check = controller.GetById(1).Result;
         Assert.IsType<NotFoundResult>(check);
     }
 
     [Fact]
     public void Delete_ReturnsNotFound_WhenDoesNotExist()
     {
-        var controller = CreateControllerWithSeededData();
+        var controller = CreateControllerWithSeededData(out var context);
 
         var result = controller.Delete(999);
 

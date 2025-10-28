@@ -1,16 +1,15 @@
 
 using CinemaApp.Model;
 using CinemaApp.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CinemaApp.Repository;
 
 public interface ISeatRepository
 {
-    List<Seat> GetAll();
-    Seat? GetById(int id);
-    void AddRange(IEnumerable<Seat> seats);
-    void Update(Seat seat);
-    void Delete(int id);
+    List<Seat> GetByRoom(int roomId);
+    List<Seat> AddRange(List<Seat> seats);
+    void Delete(List<Seat> seats);
 }
 
 public class SeatRepository : ISeatRepository
@@ -19,50 +18,48 @@ public class SeatRepository : ISeatRepository
 
     public SeatRepository(AppDbContext context) => _context = context;
 
-    public List<Seat> GetAll() => _context.Seats.ToList();
+    public List<Seat> GetByRoom(int roomId) {
+        return _context.Seats
+            .Where(s => s.RoomId == roomId)
+            .ToList();
+    }
 
-    public Seat? GetById(int id) => _context.Seats.Find(id);
-
-    public void AddRange(IEnumerable<Seat> seats)
+    public List<Seat> AddRange(List<Seat> seats)
     {
-        foreach (Seat seat in seats)
-        {
-            Validate(seat);
-        }
-
         _context.Seats.AddRange(seats);
-        _context.SaveChanges();
+        try
+        {
+            var affected = _context.SaveChanges();
+            if (affected == 0)
+                throw new InvalidOperationException("No rows affected when adding seats.");
+            return seats;
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException("Database update failed when adding seats.", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Unexpected error when adding seats.", ex);
+        }
     }
 
-    public void Update(Seat seat)
+    public void Delete(List<Seat> seats)
     {
-        Seat? existing = _context.Seats.Find(seat.Id);
-        if (existing == null)
-            throw new KeyNotFoundException($"Seat with ID {seat.Id} not found.");
-
-        Validate(seat);
-
-        existing.Status = seat.Status;
-
-        _context.SaveChanges();
-    }
-
-    public void Delete(int id)
-    {
-        Seat? seat = _context.Seats.Find(id);
-        if (seat == null)
-            throw new KeyNotFoundException($"Seat with ID {id} not found.");
-
-        _context.Seats.Remove(seat);
-        _context.SaveChanges();
-    }
-
-    private void Validate(Seat seat)
-    {
-        if (!Enum.IsDefined(seat.Status))
-            throw new ArgumentException($"Invalid seat status: {seat.Status}");
-
-        if (seat.SeatTypeId <= 0)
-            throw new ArgumentException("SeatTypeId must be specified.");
+        _context.Seats.RemoveRange(seats);
+        try
+        {
+            var affected = _context.SaveChanges();
+            if (affected == 0)
+                throw new InvalidOperationException("No rows affected when deleting seats.");
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException("Database update failed when deleting seats.", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Unexpected error when deleting seats.", ex);
+        }
     }
 }

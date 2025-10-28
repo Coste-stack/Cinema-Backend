@@ -37,6 +37,10 @@ public class CinemaRepository : ICinemaRepository
         {
             throw new InvalidOperationException("Database update failed when adding a cinema.", ex);
         }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Unexpected error when adding a cinema.", ex);
+        }
     }
 
     public void Update(Cinema cinema)
@@ -51,6 +55,10 @@ public class CinemaRepository : ICinemaRepository
         catch (DbUpdateException ex)
         {
             throw new InvalidOperationException("Database update failed when updating a cinema.", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Unexpected error when updating a cinema.", ex);
         }
     }
 }

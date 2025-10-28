@@ -15,15 +15,10 @@ public class Seat : EntityBase
     public int SeatTypeId { get; set; }
     public SeatType? SeatType { get; set; }
 
-    // TODO: Remove status - change to fit screening time
-    [Required]
-    public SeatStatus Status { get; set; } = SeatStatus.Available;
-
     public int RoomId { get; set; }
     public Room? Room { get; set; }
 }
 
-// TODO: Convert to separate table
 public enum SeatStatus
 {
     Available,

@@ -1,6 +1,7 @@
 using CinemaApp.Model;
 using CinemaApp.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CinemaApp.Controller;
 
@@ -8,85 +9,79 @@ namespace CinemaApp.Controller;
 [Route("[controller]")]
 public class SeatController : ControllerBase
 {
-    private readonly ISeatService _seatService;
-    private readonly IRoomService _roomService;
+    private readonly ISeatService _service;
 
-    public SeatController(ISeatService seatService, IRoomService roomService)
+    public SeatController(ISeatService service)
     {
-        _seatService = seatService;
-        _roomService = roomService;
+        _service = service;
     }
 
     [HttpGet("room/{roomId}")]
     public ActionResult<List<Seat>> GetByRoom(int roomId)
     {
-        Room? room = _roomService.Get(roomId);
-        if (room == null) return NotFound($"Room {roomId} not found.");
-
-        return _seatService.GetAll().Where(s => s.RoomId == roomId).ToList();
+        try
+        {
+            return _service.GetByRoom(roomId);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 
     [HttpPost("room/{roomId}/generate")]
-    public IActionResult GenerateSeats(int roomId, [FromQuery] int rows = 5, [FromQuery] int seatsPerRow = 10, [FromQuery] int seatTypeId = 1)
+    public ActionResult AddSeats(int roomId, [FromQuery] int rows = 5, [FromQuery] int seatsPerRow = 10, [FromQuery] int seatTypeId = 1)
     {
-        Room? room = _roomService.Get(roomId);
-        if (room == null) return NotFound($"Cinema with ID {roomId} not found.");
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        List<Seat> seatList = new();
-        for (char row = 'A'; row < 'A' + rows; row++)
+        try
         {
-            for (int number = 1; number <= seatsPerRow; number++)
-            {
-                seatList.Add(new Seat
-                {
-                    RoomId = roomId,
-                    Row = row.ToString(),
-                    Number = number,
-                    SeatTypeId = seatTypeId
-                });
-            }
+            var existing = _service.AddRange(roomId, rows, seatsPerRow, seatTypeId);
+            return CreatedAtAction(nameof(AddSeats), existing);
         }
-
-        _seatService.AddRange(seatList);
-        return Ok(seatList);
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            return Conflict(new { error = "Database constraint or update error.", details = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
+        }
     }
 
-    [HttpPatch("{id}/status")]
-    public IActionResult UpdateStatus(int id, [FromQuery] SeatStatus status)
-    {
-        Seat? seat = _seatService.Get(id);
-        if (seat == null) return NotFound($"Seat with ID {id} not found.");
-
-        seat.Status = status;
-        _seatService.Update(seat);
-
-        return Ok(seat);
-    }
-
-    [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
-    {
-        Seat? seat = _seatService.Get(id);
-        if (seat == null) return NotFound($"Seat with ID {id} not found.");
-
-        _seatService.Delete(id);
-        return NoContent();
-    }
-    
     [HttpDelete("room/{roomId}")]
-    public IActionResult DeleteByRoom(int roomId)
+    public ActionResult DeleteByRoom(int roomId)
     {
-        Room? room = _roomService.Get(roomId);
-        if (room == null) return NotFound($"Room {roomId} not found.");
-
-        List<Seat> seats = _seatService.GetAll().Where(s => s.RoomId == roomId).ToList();
-        if (seats.Count == 0) return NotFound("No seats found for this room.");
-
-        foreach (Seat seat in seats)
+        try
         {
-            _seatService.Delete(seat.Id);
+            _service.Delete(roomId);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            return Conflict(new { error = "Database constraint or update error.", details = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
         }
 
-        return NoContent();
+        
     }
 }

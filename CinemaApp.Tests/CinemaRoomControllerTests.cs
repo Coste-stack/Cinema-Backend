@@ -58,8 +58,9 @@ namespace CinemaApp.Tests
             var (cinemaController, roomController) = CreateControllersWithSeedData();
 
             // Act
-            var result = roomController.Create(1, new Room
+            var result = roomController.Create(new Room
             {
+                CinemaId = 1,
                 Name = "Room 1"
             });
 
@@ -75,8 +76,9 @@ namespace CinemaApp.Tests
         {
             var (_, roomController) = CreateControllersWithSeedData();
 
-            var result = roomController.Create(999, new Room
+            var result = roomController.Create(new Room
             {
+                CinemaId = 999,
                 Name = "Invalid Room"
             });
 
@@ -89,8 +91,8 @@ namespace CinemaApp.Tests
             var (cinemaController, roomController) = CreateControllersWithSeedData();
 
             // Add rooms to cinema 1
-            roomController.Create(1, new Room { Name = "Room A" });
-            roomController.Create(1, new Room { Name = "Room B" });
+            roomController.Create(new Room { CinemaId = 1, Name = "Room A" });
+            roomController.Create(new Room { CinemaId = 1, Name = "Room B" });
 
             // Retrieve cinema (ensure cinema service/Get returns Cinema with rooms loaded)
             var result = cinemaController.GetById(1);
@@ -107,7 +109,7 @@ namespace CinemaApp.Tests
         {
             var (cinemaController, roomController) = CreateControllersWithSeedData();
 
-            roomController.Create(1, new Room { Name = "Room X" });
+            roomController.Create(new Room { CinemaId = 1, Name = "Room X" });
 
             var roomResult = roomController.GetAll();
             var rooms = Assert.IsType<List<Room>>(roomResult.Value);

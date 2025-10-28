@@ -1,6 +1,7 @@
 
 using CinemaApp.Model;
 using CinemaApp.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CinemaApp.Repository;
 
@@ -8,9 +9,11 @@ public interface IRoomRepository
 {
     List<Room> GetAll();
     Room? GetById(int id);
-    void Add(Room room);
+    Room Add(Room room);
     void Update(Room room);
-    void Delete(int id);
+    void Delete(Room room);
+
+    public bool DoesCinemaExist(int cinemaId);
 }
 
 public class RoomRepository : IRoomRepository
@@ -23,31 +26,68 @@ public class RoomRepository : IRoomRepository
 
     public Room? GetById(int id) => _context.Rooms.Find(id);
 
-    public void Add(Room room)
+    public Room Add(Room room)
     {
         _context.Rooms.Add(room);
-        _context.SaveChanges();
-    }
-
-    public void Delete(int id)
-    {
-        var room = _context.Rooms.Find(id);
-        if (room == null) return;
-
-        _context.Rooms.Remove(room);
-        _context.SaveChanges();
+        try
+        {
+            var affected = _context.SaveChanges();
+            if (affected == 0)
+                throw new InvalidOperationException("No rows affected when adding a room.");
+            return room;
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException("Database update failed when adding a room.", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Unexpected error when adding a room.", ex);
+        }
     }
 
     public void Update(Room room)
     {
-        Room? existingRoom = _context.Rooms.Find(room.Id);
-        if (existingRoom == null) return;
+        _context.Rooms.Update(room);
+        try
+        {
+            var affected = _context.SaveChanges();
+            if (affected == 0)
+                throw new InvalidOperationException("No rows affected when updating a room.");
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException("Database update failed when updating a room.", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Unexpected error when updating a room.", ex);
+        }
+    }
 
-        if (!string.IsNullOrEmpty(room.Name))
-            existingRoom.Name = room.Name;
+    public void Delete(Room room)
+    {
+        _context.Rooms.Remove(room);
+        try
+        {
+            var affected = _context.SaveChanges();
+            if (affected == 0)
+                throw new InvalidOperationException("No rows affected when deleting a room.");
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException("Database update failed when deleting a room.", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Unexpected error when deleting a room.", ex);
+        }
+    }
 
-        existingRoom.CinemaId = room.CinemaId;
-
-        _context.SaveChanges();
+    public bool DoesCinemaExist(int cinemaId)
+    {
+        var cinema = _context.Cinemas.FirstOrDefault(c => c.Id == cinemaId);
+        if (cinema != null) return true;
+        return false;
     }
 }

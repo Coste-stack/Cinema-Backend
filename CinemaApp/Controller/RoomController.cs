@@ -1,6 +1,7 @@
 using CinemaApp.Model;
 using CinemaApp.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CinemaApp.Controller;
 
@@ -8,72 +9,93 @@ namespace CinemaApp.Controller;
 [Route("[controller]")]
 public class RoomController : ControllerBase
 {
-    private readonly IRoomService _roomService;
+    private readonly IRoomService _service;
     private readonly ICinemaService _cinemaService;
 
-    public RoomController(IRoomService roomService, ICinemaService cinemaService)
+    public RoomController(IRoomService service, ICinemaService cinemaService)
     {
-        _roomService = roomService;
+        _service = service;
         _cinemaService = cinemaService;
     }
 
 
     [HttpGet]
-    public ActionResult<List<Room>> GetAll() =>
-        _roomService.GetAll();
+    public ActionResult<List<Room>> GetAll()
+    {
+        return _service.GetAll();
+    }
 
     [HttpGet("{id}")]
-    public ActionResult<Room> Get(int id)
+    public ActionResult<Room> GetById(int id)
     {
-        Room? room = _roomService.Get(id);
+        Room? room = _service.GetById(id);
         if (room == null) return NotFound();
-
         return room;
     }
 
     [HttpPost]
     public IActionResult Create([FromBody] Room room)
     {
-        Cinema? cinema = _cinemaService.GetById(room.CinemaId);
-        if (cinema == null) 
-            return NotFound($"Cinema with ID {room.CinemaId} not found.");
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        _roomService.Add(room);
-        return CreatedAtAction(nameof(Get), new { id = room.Id }, room);
-    }
-
-    [HttpPost("cinemas/{cinemaId}")]
-    public IActionResult Create(int cinemaId, [FromBody] Room room)
-    {
-        Cinema? cinema = _cinemaService.GetById(cinemaId);
-        if (cinema == null) 
-            return NotFound($"Cinema with ID {cinemaId} not found.");
-
-        room.CinemaId = cinemaId;
-        _roomService.Add(room);
-        return CreatedAtAction(nameof(Get), new { id = room.Id }, room);
+        try
+        {
+            var existing = _service.Add(room);
+            return CreatedAtAction(nameof(GetById), new { id = existing.Id }, existing);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            return Conflict(new { error = "Database constraint or update error.", details = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
+        }
     }
 
     [HttpPut("{id}")]
     public IActionResult Update(int id, [FromBody] Room room)
-    {
-        if (id != room.Id)
-        return BadRequest();
-            
-        Room? existingRoom = _roomService.Get(id);
-        if(existingRoom == null) return NotFound();
-    
-        _roomService.Update(room);           
-        return NoContent();
+    {   
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        try
+        {
+            _service.Update(id, room);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        } 
+        catch (DbUpdateException ex)
+        {
+            return Conflict(new { error = "Database constraint or update error.", details = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
+        }  
     }
 
     [HttpDelete("{id}")]
     public IActionResult Delete(int id)
     {
-        Room? room = _roomService.Get(id);
+        Room? room = _service.GetById(id);
         if (room == null) return NotFound();
         
-        _roomService.Delete(id);
+        _service.Delete(id);
         return NoContent();
     }
 }

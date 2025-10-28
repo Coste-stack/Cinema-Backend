@@ -47,6 +47,10 @@ public class UserRepository : IUserRepository
         {
             throw new InvalidOperationException("Database update failed when adding a user.", ex);
         }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Unexpected error when adding a user.", ex);
+        }
     }
 
     public void Update(User user)
@@ -61,6 +65,10 @@ public class UserRepository : IUserRepository
         catch (DbUpdateException ex)
         {
             throw new InvalidOperationException("Database update failed when updating a user.", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Unexpected error when updating a user.", ex);
         }
     }
     

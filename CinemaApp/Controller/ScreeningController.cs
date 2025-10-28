@@ -47,7 +47,7 @@ public class ScreeningController : ControllerBase
     [HttpGet("room/{roomId}")]
     public ActionResult<List<Screening>> GetByRoom(int roomId)
     {
-        Room? room = _roomService.Get(roomId);
+        Room? room = _roomService.GetById(roomId);
         if (room == null) return NotFound($"Room {roomId} not found.");
 
         return _screeningService.GetAll().Where(s => s.RoomId == roomId).ToList(); ;
@@ -110,7 +110,7 @@ public class ScreeningController : ControllerBase
     [HttpDelete("room/{roomId}")]
     public IActionResult DeleteByRoom(int roomId)
     {
-        Room? room = _roomService.Get(roomId);
+        Room? room = _roomService.GetById(roomId);
         if (room == null) return NotFound($"Room {roomId} not found.");
 
         List<Screening> screenings = _screeningService.GetAll().Where(s => s.RoomId == roomId).ToList();
@@ -135,7 +135,7 @@ public class ScreeningController : ControllerBase
         if (movie == null)
             return NotFound($"Movie with ID {screening.MovieId} not found.");
             
-        Room? room = _roomService.Get(screening.RoomId);
+        Room? room = _roomService.GetById(screening.RoomId);
         if (room == null)
             return NotFound($"Room with ID {screening.RoomId} not found.");
 
