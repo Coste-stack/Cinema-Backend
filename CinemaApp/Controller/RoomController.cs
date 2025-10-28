@@ -10,12 +10,9 @@ namespace CinemaApp.Controller;
 public class RoomController : ControllerBase
 {
     private readonly IRoomService _service;
-    private readonly ICinemaService _cinemaService;
-
-    public RoomController(IRoomService service, ICinemaService cinemaService)
+    public RoomController(IRoomService service)
     {
         _service = service;
-        _cinemaService = cinemaService;
     }
 
 
@@ -28,13 +25,18 @@ public class RoomController : ControllerBase
     [HttpGet("{id}")]
     public ActionResult<Room> GetById(int id)
     {
-        Room? room = _service.GetById(id);
-        if (room == null) return NotFound();
-        return room;
+        try
+        {
+            return _service.GetById(id);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 
     [HttpPost]
-    public IActionResult Create([FromBody] Room room)
+    public ActionResult Create([FromBody] Room room)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -62,7 +64,7 @@ public class RoomController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public IActionResult Update(int id, [FromBody] Room room)
+    public ActionResult Update(int id, [FromBody] Room room)
     {   
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -90,12 +92,20 @@ public class RoomController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    public ActionResult Delete(int id)
     {
-        Room? room = _service.GetById(id);
-        if (room == null) return NotFound();
-        
-        _service.Delete(id);
-        return NoContent();
+        try
+        {
+            _service.Delete(id);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
+        }  
     }
 }

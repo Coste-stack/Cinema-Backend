@@ -40,11 +40,9 @@ public class RoomControllerTests
 
         IRoomRepository repository = new RoomRepository(context);
         IRoomService service = new RoomService(repository);
-        ICinemaRepository cinemaRepo = new CinemaRepository(context);
-        ICinemaService cinemaService = new CinemaService(cinemaRepo);
 
         // Note: RoomController constructor takes (IRoomService, ICinemaService)
-        return new RoomController(service, cinemaService);
+        return new RoomController(service);
     }
 
     [Fact]
@@ -78,7 +76,7 @@ public class RoomControllerTests
 
         var result = controller.GetById(999);
 
-        Assert.IsType<NotFoundResult>(result.Result);
+        Assert.IsType<NotFoundObjectResult>(result.Result);
     }
 
     [Fact]
@@ -121,7 +119,7 @@ public class RoomControllerTests
         Assert.IsType<NoContentResult>(result);
 
         var check = controller.GetById(1).Result;
-        Assert.IsType<NotFoundResult>(check);
+        Assert.IsType<NotFoundObjectResult>(check);
     }
 
     [Fact]
@@ -131,6 +129,6 @@ public class RoomControllerTests
 
         var result = controller.Delete(999);
 
-        Assert.IsType<NotFoundResult>(result);
+        Assert.IsType<NotFoundObjectResult>(result);
     }
 }

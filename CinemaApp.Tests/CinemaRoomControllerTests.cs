@@ -47,7 +47,7 @@ namespace CinemaApp.Tests
 
             // Create controllers
             var cinemaController = new CinemaController(cinemaService);
-            var roomController = new RoomController(roomService, cinemaService);
+            var roomController = new RoomController(roomService);
 
             return (cinemaController, roomController);
         }
@@ -55,7 +55,7 @@ namespace CinemaApp.Tests
         [Fact]
         public void AddRoomToExistingCinema_ShouldCreateRoomAndLinkCinema()
         {
-            var (cinemaController, roomController) = CreateControllersWithSeedData();
+            var (_, roomController) = CreateControllersWithSeedData();
 
             // Act
             var result = roomController.Create(new Room

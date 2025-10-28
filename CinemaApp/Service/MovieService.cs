@@ -6,10 +6,10 @@ namespace CinemaApp.Service;
 public interface IMovieService
 {
     List<Movie> GetAll();
-    Movie? Get(int id);
-    void Add(Movie movie);
+    Movie GetById(int id);
+    Movie Add(Movie movie);
+    void Update(int id, Movie movie);
     void Delete(int id);
-    void Update(Movie movie);
 }
 
 public class MovieService : IMovieService
@@ -23,23 +23,64 @@ public class MovieService : IMovieService
         return _repository.GetAll().ToList();
     }
 
-    public Movie? Get(int id)
+    public Movie GetById(int id)
     {
-        return _repository.GetById(id);
+        var movie = _repository.GetById(id);
+        if (movie == null)
+            throw new KeyNotFoundException($"Movie with ID {id} not found.");
+        return movie;
     }
 
-    public void Add(Movie movie)
+    public Movie Add(Movie movie)
     {
-        _repository.Add(movie);
+        if (movie == null)
+            throw new ArgumentException("Movie data is required.");
+
+        if (movie.Duration <= 0)
+            throw new ArgumentException("Duration cannot be null.");
+
+        return _repository.Add(movie);
+    }
+
+    public void Update(int id, Movie movie)
+    {
+        if (id != movie.Id)
+            throw new ArgumentException($"ID {id} and ID {movie.Id} mismatch in request objects");
+
+        var existing = _repository.GetById(id);
+        if (existing == null) 
+            throw new KeyNotFoundException($"Movie with ID {id} not found.");
+
+        if (!string.IsNullOrWhiteSpace(movie.Title))
+            existing.Title = movie.Title.Trim();
+
+        if (!string.IsNullOrEmpty(movie.Description))
+            existing.Description = movie.Description;
+
+        if (!string.IsNullOrEmpty(movie.Description))
+            existing.Description = movie.Description;
+
+        if (movie.Duration > 0)
+            existing.Duration = movie.Duration;
+
+        if (!string.IsNullOrEmpty(movie.Genre))
+            existing.Genre = movie.Genre;
+
+        if (movie.Rating != null)
+            existing.Rating = movie.Rating;
+
+        if (movie.ReleaseDate != null)
+            existing.ReleaseDate = movie.ReleaseDate;
+
+        _repository.Update(existing);
     }
 
     public void Delete(int id)
     {
-        _repository.Delete(id);
-    }
+        var movie = _repository.GetById(id);
+        if (movie == null) 
+            throw new KeyNotFoundException($"Movie with ID {id} not found.");
 
-    public void Update(Movie movie)
-    {
-        _repository.Update(movie);
+        _repository.Delete(movie);
     }
 }

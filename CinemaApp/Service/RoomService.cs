@@ -6,7 +6,7 @@ namespace CinemaApp.Service;
 public interface IRoomService
 {
     List<Room> GetAll();
-    Room? GetById(int id);
+    Room GetById(int id);
     Room Add(Room room);
     void Update(int id, Room room);
     void Delete(int id);
@@ -23,9 +23,12 @@ public class RoomService : IRoomService
         return _repository.GetAll().ToList();
     }
 
-    public Room? GetById(int id)
+    public Room GetById(int id)
     {
-        return _repository.GetById(id);
+        var room = _repository.GetById(id);
+        if (room == null)
+            throw new KeyNotFoundException($"Room with ID {id} not found.");
+        return room;
     }
 
     public Room Add(Room room)

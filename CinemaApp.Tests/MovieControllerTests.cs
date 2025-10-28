@@ -80,7 +80,7 @@ public class MovieControllerTests
     {
         var controller = CreateControllerWithSeededData();
 
-        var result = controller.Get(1);
+        var result = controller.GetById(1);
 
         var movie = Assert.IsType<Movie>(result.Value);
         Assert.Equal(1, movie.Id);
@@ -92,9 +92,9 @@ public class MovieControllerTests
     {
         var controller = CreateControllerWithSeededData();
 
-        var result = controller.Get(9999);
+        var result = controller.GetById(9999);
 
-        Assert.IsType<NotFoundResult>(result.Result);
+        Assert.IsType<NotFoundObjectResult>(result.Result);
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public class MovieControllerTests
 
         var result = controller.Update(2, movie);
 
-        Assert.IsType<BadRequestResult>(result);
+        Assert.IsType<BadRequestObjectResult>(result);
     }
 
     [Fact]
@@ -151,7 +151,7 @@ public class MovieControllerTests
 
         var result = controller.Update(999, movie);
 
-        Assert.IsType<NotFoundResult>(result);
+        Assert.IsType<NotFoundObjectResult>(result);
     }
 
     [Fact]
@@ -170,7 +170,7 @@ public class MovieControllerTests
 
         Assert.IsType<NoContentResult>(result);
 
-        var updated = controller.Get(1).Value!;
+        var updated = controller.GetById(1).Value!;
         Assert.Equal("Inception Reloaded", updated.Title);
         Assert.Equal(155, updated.Duration);
     }
@@ -185,8 +185,8 @@ public class MovieControllerTests
         var result = controller.Delete(lastMovie.Id);
 
         Assert.IsType<NoContentResult>(result);
-        var deletedResult = controller.Get(lastMovie.Id).Result;
-        Assert.IsType<NotFoundResult>(deletedResult);
+        var deletedResult = controller.GetById(lastMovie.Id).Result;
+        Assert.IsType<NotFoundObjectResult>(deletedResult);
     }
 
     [Fact]
@@ -194,6 +194,6 @@ public class MovieControllerTests
     {
         var controller = CreateControllerWithSeededData();
         var result = controller.Delete(9999);
-        Assert.IsType<NotFoundResult>(result);
+        Assert.IsType<NotFoundObjectResult>(result);
     }
 }

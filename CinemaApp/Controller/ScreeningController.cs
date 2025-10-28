@@ -38,7 +38,7 @@ public class ScreeningController : ControllerBase
     [HttpGet("movie/{movieId}")]
     public ActionResult<List<Screening>> GetByMovie(int movieId)
     {
-        Movie? movie = _movieService.Get(movieId);
+        Movie? movie = _movieService.GetById(movieId);
         if (movie == null) return NotFound($"Movie {movieId} not found.");
 
         return _screeningService.GetAll().Where(s => s.MovieId == movieId).ToList(); ;
@@ -92,7 +92,7 @@ public class ScreeningController : ControllerBase
     [HttpDelete("movie/{movieId}")]
     public IActionResult DeleteByMovie(int movieId)
     {
-        Movie? movie = _movieService.Get(movieId);
+        Movie? movie = _movieService.GetById(movieId);
         if (movie == null) return NotFound($"Movie {movieId} not found.");
 
         List<Screening> screenings = _screeningService.GetAll().Where(s => s.MovieId == movieId).ToList();
@@ -131,7 +131,7 @@ public class ScreeningController : ControllerBase
         if (projectionType == null)
             return NotFound($"ProjectionType with ID {screening.ProjectionTypeId} not found.");
 
-        Movie? movie = _movieService.Get(screening.MovieId);
+        Movie? movie = _movieService.GetById(screening.MovieId);
         if (movie == null)
             return NotFound($"Movie with ID {screening.MovieId} not found.");
             

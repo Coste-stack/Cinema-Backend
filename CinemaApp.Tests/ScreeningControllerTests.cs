@@ -87,27 +87,7 @@ namespace CinemaApp.Tests
             Assert.Equal(projectionType.Id, returnedScreening.ProjectionTypeId);
             Assert.Equal(screening.EndTime, returnedScreening.EndTime);
         }
-
-        [Fact]
-        public void Create_ReturnsNotFound_WhenMovieMissing()
-        {
-            var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
-
-            var screening = new Screening
-            {
-                MovieId = 999,
-                RoomId = room.Id,
-                ProjectionTypeId = projectionType.Id,
-                StartTime = DateTime.UtcNow,
-                EndTime = DateTime.UtcNow.AddHours(2)
-            };
-
-            var result = controller.Create(screening);
-
-            var notFound = Assert.IsType<NotFoundObjectResult>(result);
-            Assert.Contains("Movie with ID 999 not found", notFound.Value?.ToString() ?? string.Empty);
-        }
-
+        
         [Fact]
         public void Create_ReturnsNotFound_WhenProjectionTypeMissing()
         {

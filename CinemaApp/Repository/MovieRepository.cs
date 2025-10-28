@@ -1,6 +1,7 @@
 
 using CinemaApp.Model;
 using CinemaApp.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CinemaApp.Repository;
 
@@ -8,9 +9,9 @@ public interface IMovieRepository
 {
     List<Movie> GetAll();
     Movie? GetById(int id);
-    void Add(Movie movie);
+    Movie Add(Movie movie);
     void Update(Movie movie);
-    void Delete(int id);
+    void Delete(Movie movie);
 }
 
 public class MovieRepository : IMovieRepository
@@ -23,44 +24,61 @@ public class MovieRepository : IMovieRepository
 
     public Movie? GetById(int id) => _context.Movies.Find(id);
 
-    public void Add(Movie movie)
+    public Movie Add(Movie movie)
     {
         _context.Movies.Add(movie);
-        _context.SaveChanges();
-    }
-
-    public void Delete(int id)
-    {
-        var movie = _context.Movies.Find(id);
-        if (movie == null) return;
-
-        _context.Movies.Remove(movie);
-        _context.SaveChanges();
+        try
+        {
+            var affected = _context.SaveChanges();
+            if (affected == 0)
+                throw new InvalidOperationException("No rows affected when adding a movie.");
+            return movie;
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException("Database update failed when adding a movie.", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Unexpected error when adding a movie.", ex);
+        }
     }
 
     public void Update(Movie movie)
     {
-        Movie? existingMovie = _context.Movies.Find(movie.Id);
-        if (existingMovie == null) return;
+        _context.Movies.Update(movie);
+        try
+        {
+            var affected = _context.SaveChanges();
+            if (affected == 0)
+                throw new InvalidOperationException("No rows affected when updating a movie.");
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException("Database update failed when updating a movie.", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Unexpected error when updating a movie.", ex);
+        }
+    }
 
-        if (!string.IsNullOrEmpty(movie.Title))
-            existingMovie.Title = movie.Title;
-
-        if (!string.IsNullOrEmpty(movie.Description))
-            existingMovie.Description = movie.Description;
-
-        if (movie.Duration > 0)
-            existingMovie.Duration = movie.Duration;
-
-        if (!string.IsNullOrEmpty(movie.Genre))
-            existingMovie.Genre = movie.Genre;
-
-        if (movie.Rating != null)
-            existingMovie.Rating = movie.Rating;
-
-        if (movie.ReleaseDate != null)
-            existingMovie.ReleaseDate = movie.ReleaseDate;
-
-        _context.SaveChanges();
+    public void Delete(Movie movie)
+    {
+        _context.Movies.Remove(movie);
+        try
+        {
+            var affected = _context.SaveChanges();
+            if (affected == 0)
+                throw new InvalidOperationException("No rows affected when deleting a room.");
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException("Database update failed when deleting a room.", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Unexpected error when deleting a room.", ex);
+        }
     }
 }
