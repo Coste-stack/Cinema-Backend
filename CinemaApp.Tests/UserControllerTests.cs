@@ -84,9 +84,7 @@ public class UserControllerTests
     {
         var controller = CreateControllerWithSeededData(out _, out _);
 
-        var result = controller.GetById(9999);
-
-        Assert.IsType<NotFoundResult>(result.Result);
+        Assert.Throws<NotFoundException>(() => controller.GetById(9999));
     }
 
     [Fact]
@@ -108,9 +106,7 @@ public class UserControllerTests
     {
         var controller = CreateControllerWithSeededData(out _, out _);
 
-        var result = controller.GetByEmail("aaabbb@example.com");
-
-        Assert.IsType<NotFoundResult>(result.Result);
+        Assert.Throws<NotFoundException>(() => controller.GetByEmail("aaabbb@example.com"));
     }
 
     [Fact]
@@ -124,7 +120,7 @@ public class UserControllerTests
             Password = "Secret!23"
         };
 
-        var action = controller.Create(dto);
+        var action = controller.Register(dto);
 
         var created = Assert.IsType<CreatedAtActionResult>(action);
         var createdDto = Assert.IsType<UserResponseDTO>(created.Value);
@@ -153,7 +149,7 @@ public class UserControllerTests
             Password = null
         };
 
-        var action = controller.Create(dto);
+        var action = controller.Register(dto);
 
         var created = Assert.IsType<CreatedAtActionResult>(action);
         var createdDto = Assert.IsType<UserResponseDTO>(created.Value);
@@ -167,7 +163,7 @@ public class UserControllerTests
     }
 
     [Fact]
-    public void Create_ReturnsBadRequest_WhenEmailAlreadyExists()
+    public void Create_ThrowsBadRequest_WhenEmailAlreadyExists()
     {
         var controller = CreateControllerWithSeededData(out var context, out _);
 
@@ -177,9 +173,7 @@ public class UserControllerTests
             Password = "Anything"
         };
 
-        var action = controller.Create(dto);
-
-        Assert.IsType<BadRequestObjectResult>(action);
+        Assert.Throws<BadRequestException>(() => controller.Register(dto));
     }
 
     [Fact]
@@ -218,9 +212,7 @@ public class UserControllerTests
             Password = "pass"
         };
 
-        var action = controller.Update(9999, dto);
-
-        Assert.IsType<NotFoundObjectResult>(action);
+        Assert.Throws<NotFoundException>(() => controller.Update(9999, dto));
     }
 
     [Fact]
@@ -237,8 +229,6 @@ public class UserControllerTests
             Password = null
         };
 
-        var action = controller.Update(userToUpdate.Id, dto);
-
-        Assert.IsType<BadRequestObjectResult>(action);
+        Assert.Throws<BadRequestException>(() => controller.Update(userToUpdate.Id, dto));
     }
 }

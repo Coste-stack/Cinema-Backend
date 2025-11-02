@@ -76,9 +76,7 @@ public class SeatControllerTests
     {
         var controller = CreateControllerWithSeededData(out _);
 
-        var result = controller.GetByRoom(999);
-
-        Assert.IsType<NotFoundObjectResult>(result.Result);
+        Assert.Throws<NotFoundException>(() => controller.GetByRoom(999));
     }
 
     [Fact]
@@ -107,9 +105,7 @@ public class SeatControllerTests
     {
         var controller = CreateControllerWithSeededData(out _);
 
-        var result = controller.AddSeats(999, rows: 1, seatsPerRow: 1, seatTypeId: 1);
-
-        Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Throws<NotFoundException>(() => controller.AddSeats(999, rows: 1, seatsPerRow: 1, seatTypeId: 1));
     }
 
     [Fact]
@@ -131,7 +127,6 @@ public class SeatControllerTests
     {
         var controller = CreateControllerWithSeededData(out _);
 
-        var result = controller.DeleteByRoom(999);
-        Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Throws<NotFoundException>(() => controller.DeleteByRoom(999));
     }
 }

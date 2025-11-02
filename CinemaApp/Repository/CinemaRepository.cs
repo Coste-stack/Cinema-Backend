@@ -30,16 +30,16 @@ public class CinemaRepository : ICinemaRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when adding a cinema.");
+                throw new ConflictException("No rows affected when adding a cinema.");
             return cinema;
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when adding a cinema.", ex);
+            throw new ConflictException("Database update failed when adding a cinema.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when adding a cinema.", ex);
+            throw new Exception("Unexpected error when adding a cinema.", ex);
         }
     }
 
@@ -50,15 +50,15 @@ public class CinemaRepository : ICinemaRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when updating a cinema.");
+                throw new ConflictException("No rows affected when updating a cinema.");
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when updating a cinema.", ex);
+            throw new ConflictException("Database update failed when updating a cinema.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when updating a cinema.", ex);
+            throw new Exception("Unexpected error when updating a cinema.", ex);
         }
     }
 }

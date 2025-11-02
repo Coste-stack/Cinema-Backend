@@ -25,7 +25,7 @@ public class SeatService : ISeatService
     {
         var room = _roomRepository.GetById(roomId);
         if (room == null)
-            throw new KeyNotFoundException($"Room with ID {roomId} not found.");
+            throw new NotFoundException($"Room with ID {roomId} not found.");
 
         return _repository.GetByRoom(roomId);
     }
@@ -34,7 +34,7 @@ public class SeatService : ISeatService
     {
         var existingRoom = _roomRepository.GetById(roomId);
         if (existingRoom == null) 
-            throw new KeyNotFoundException($"Room with ID {roomId} not found.");
+            throw new NotFoundException($"Room with ID {roomId} not found.");
 
         var seats= new List<Seat>();
         for (char row = 'A'; row < 'A' + rows; row++)
@@ -59,11 +59,11 @@ public class SeatService : ISeatService
     {
         var existingRoom = _roomRepository.GetById(roomId);
         if (existingRoom == null) 
-            throw new KeyNotFoundException($"Room with ID {roomId} not found.");
+            throw new NotFoundException($"Room with ID {roomId} not found.");
 
         var seats = _repository.GetByRoom(roomId);
         if (seats.Count == 0) 
-            throw new KeyNotFoundException("No seats found for this room.");
+            throw new NotFoundException("No seats found for this room.");
         
         _repository.Delete(seats);
     }

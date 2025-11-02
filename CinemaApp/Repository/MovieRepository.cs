@@ -31,16 +31,16 @@ public class MovieRepository : IMovieRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when adding a movie.");
+                throw new ConflictException("No rows affected when adding a movie.");
             return movie;
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when adding a movie.", ex);
+            throw new ConflictException("Database update failed when adding a movie.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when adding a movie.", ex);
+            throw new Exception("Unexpected error when adding a movie.", ex);
         }
     }
 
@@ -51,15 +51,15 @@ public class MovieRepository : IMovieRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when updating a movie.");
+                throw new ConflictException("No rows affected when updating a movie.");
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when updating a movie.", ex);
+            throw new ConflictException("Database update failed when updating a movie.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when updating a movie.", ex);
+            throw new Exception("Unexpected error when updating a movie.", ex);
         }
     }
 
@@ -70,15 +70,15 @@ public class MovieRepository : IMovieRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when deleting a room.");
+                throw new ConflictException("No rows affected when deleting a room.");
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when deleting a room.", ex);
+            throw new ConflictException("Database update failed when deleting a room.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when deleting a room.", ex);
+            throw new Exception("Unexpected error when deleting a room.", ex);
         }
     }
 }

@@ -33,16 +33,16 @@ public class RoomRepository : IRoomRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when adding a room.");
+                throw new ConflictException("No rows affected when adding a room.");
             return room;
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when adding a room.", ex);
+            throw new ConflictException("Database update failed when adding a room.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when adding a room.", ex);
+            throw new Exception("Unexpected error when adding a room.", ex);
         }
     }
 
@@ -53,15 +53,15 @@ public class RoomRepository : IRoomRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when updating a room.");
+                throw new ConflictException("No rows affected when updating a room.");
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when updating a room.", ex);
+            throw new ConflictException("Database update failed when updating a room.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when updating a room.", ex);
+            throw new Exception("Unexpected error when updating a room.", ex);
         }
     }
 
@@ -72,15 +72,15 @@ public class RoomRepository : IRoomRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when deleting a room.");
+                throw new ConflictException("No rows affected when deleting a room.");
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when deleting a room.", ex);
+            throw new ConflictException("Database update failed when deleting a room.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when deleting a room.", ex);
+            throw new Exception("Unexpected error when deleting a room.", ex);
         }
     }
 

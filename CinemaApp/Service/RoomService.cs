@@ -27,20 +27,20 @@ public class RoomService : IRoomService
     {
         var room = _repository.GetById(id);
         if (room == null)
-            throw new KeyNotFoundException($"Room with ID {id} not found.");
+            throw new NotFoundException($"Room with ID {id} not found.");
         return room;
     }
 
     public Room Add(Room room)
     {
         if (!_repository.DoesCinemaExist(room.CinemaId))
-            throw new KeyNotFoundException($"Cinema with ID {room.CinemaId} not found to link to room on create.");
+            throw new NotFoundException($"Cinema with ID {room.CinemaId} not found to link to room on create.");
             
         if (room == null)
-            throw new ArgumentException("Room data is required.");
+            throw new BadRequestException("Room data is required.");
 
         if (string.IsNullOrWhiteSpace(room.Name))
-            throw new ArgumentException("Name cannot be null or empty.");
+            throw new BadRequestException("Name cannot be null or empty.");
 
         return _repository.Add(room);
     }
@@ -49,14 +49,14 @@ public class RoomService : IRoomService
     {
         var existing = _repository.GetById(id);
         if (existing == null) 
-            throw new KeyNotFoundException($"Room with ID {id} not found.");
+            throw new NotFoundException($"Room with ID {id} not found.");
 
         if (!string.IsNullOrWhiteSpace(room.Name))
             existing.Name = room.Name.Trim();
 
         if (room.CinemaId > 0) {
             if (!_repository.DoesCinemaExist(room.CinemaId)) {
-                throw new KeyNotFoundException($"Cinema with ID {id} not found to link to room on update.");
+                throw new NotFoundException($"Cinema with ID {id} not found to link to room on update.");
             }
             existing.CinemaId = room.CinemaId;
         }
@@ -67,7 +67,7 @@ public class RoomService : IRoomService
     {
         var existing = _repository.GetById(id);
         if (existing == null) 
-            throw new KeyNotFoundException($"Room with ID {id} not found.");
+            throw new NotFoundException($"Room with ID {id} not found.");
         
         _repository.Delete(existing);
     }

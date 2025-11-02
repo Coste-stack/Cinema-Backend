@@ -74,15 +74,13 @@ namespace CinemaApp.Tests
         [Fact]
         public void AddRoomToNonexistentCinema_ShouldReturnNotFound()
         {
-            var (_, roomController) = CreateControllersWithSeedData();
+            var (_, roomController) = CreateControllersWithSeedData(); 
 
-            var result = roomController.Create(new Room
+            Assert.Throws<NotFoundException>(() => roomController.Create(new Room
             {
                 CinemaId = 999,
                 Name = "Invalid Room"
-            });
-
-            Assert.IsType<NotFoundObjectResult>(result);
+            }));
         }
 
         [Fact]

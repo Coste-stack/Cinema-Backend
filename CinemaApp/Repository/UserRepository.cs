@@ -40,16 +40,16 @@ public class UserRepository : IUserRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when adding a user.");
+                throw new ConflictException("No rows affected when adding a user.");
             return user;
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when adding a user.", ex);
+            throw new ConflictException("Database update failed when adding a user.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when adding a user.", ex);
+            throw new Exception("Unexpected error when adding a user.", ex);
         }
     }
 
@@ -60,15 +60,15 @@ public class UserRepository : IUserRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when updating a user.");
+                throw new ConflictException("No rows affected when updating a user.");
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when updating a user.", ex);
+            throw new ConflictException("Database update failed when updating a user.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when updating a user.", ex);
+            throw new Exception("Unexpected error when updating a user.", ex);
         }
     }
     

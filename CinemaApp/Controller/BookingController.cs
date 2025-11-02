@@ -23,14 +23,7 @@ namespace CinemaApp.Controller
         [HttpGet("{id:int}")]
         public ActionResult<Booking> GetById(int id)
         {
-            try
-            {
-                return _service.GetById(id);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { error = ex.Message });
-            }
+            return _service.GetById(id);
         }
 
         [HttpPost]
@@ -38,23 +31,8 @@ namespace CinemaApp.Controller
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            try
-            {
-                var created = _service.Create(dto);
-                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (DbUpdateException ex)
-            {
-                return Conflict(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
-            }
+            var created = _service.Create(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
     }
 }

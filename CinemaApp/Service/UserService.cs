@@ -38,7 +38,7 @@ public class UserService : IUserService
     public User? Get(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
-            throw new ArgumentException("Email not valid.");
+            throw new BadRequestException("Email not valid.");
         
         return _repository.GetByEmail(email);
     }
@@ -46,13 +46,13 @@ public class UserService : IUserService
     public User Add(UserCreateDTO dto)
     {
         if (dto == null) 
-            throw new ArgumentException("User data is required.");
+            throw new BadRequestException("User data is required.");
 
         if (string.IsNullOrWhiteSpace(dto.Email))
-            throw new ArgumentException("Email is required.");
+            throw new BadRequestException("Email is required.");
 
         if (_repository.UserWithEmailExists(dto.Email))
-            throw new ArgumentException("Email already used.");
+            throw new BadRequestException("Email already used.");
 
         var user = new User{
             Email = dto.Email
@@ -70,13 +70,13 @@ public class UserService : IUserService
     public void Update(int id, UserCreateDTO dto)
     {
         var existingUser = _repository.GetById(id);
-        if (existingUser == null) throw new KeyNotFoundException("User not found.");
+        if (existingUser == null) throw new NotFoundException("User not found.");
 
         // Replace email
         if (!string.IsNullOrWhiteSpace(dto.Email) && !string.Equals(existingUser.Email, dto.Email, StringComparison.OrdinalIgnoreCase))
         {
             if (_repository.UserWithEmailExists(dto.Email))
-                throw new ArgumentException("Email already used.");
+                throw new BadRequestException("Email already used.");
 
             existingUser.Email = dto.Email;
         }

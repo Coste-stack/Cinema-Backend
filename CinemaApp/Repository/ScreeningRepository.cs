@@ -38,16 +38,16 @@ public class ScreeningRepository : IScreeningRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when adding a screening.");
+                throw new ConflictException("No rows affected when adding a screening.");
             return screening;
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when adding a screening.", ex);
+            throw new ConflictException("Database update failed when adding a screening.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when adding a screening.", ex);
+            throw new Exception("Unexpected error when adding a screening.", ex);
         }
         
     }
@@ -59,15 +59,15 @@ public class ScreeningRepository : IScreeningRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when updating a screening.");
+                throw new ConflictException("No rows affected when updating a screening.");
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when updating a screening.", ex);
+            throw new ConflictException("Database update failed when updating a screening.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when updating a screening.", ex);
+            throw new Exception("Unexpected error when updating a screening.", ex);
         }
     }
 
@@ -78,15 +78,15 @@ public class ScreeningRepository : IScreeningRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when deleting a screening.");
+                throw new ConflictException("No rows affected when deleting a screening.");
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when deleting a screening.", ex);
+            throw new ConflictException("Database update failed when deleting a screening.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when deleting a screening.", ex);
+            throw new Exception("Unexpected error when deleting a screening.", ex);
         }
     }
 
@@ -97,15 +97,15 @@ public class ScreeningRepository : IScreeningRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when deleting screenings.");
+                throw new ConflictException("No rows affected when deleting screenings.");
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when deleting screenings.", ex);
+            throw new ConflictException("Database update failed when deleting screenings.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when deleting screenings.", ex);
+            throw new Exception("Unexpected error when deleting screenings.", ex);
         }
     }
 }

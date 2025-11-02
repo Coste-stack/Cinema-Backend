@@ -74,9 +74,7 @@ public class RoomControllerTests
     {
         var controller = CreateControllerWithSeededData(out var context);
 
-        var result = controller.GetById(999);
-
-        Assert.IsType<NotFoundObjectResult>(result.Result);
+        Assert.Throws<NotFoundException>(() => controller.GetById(999));
     }
 
     [Fact]
@@ -118,8 +116,7 @@ public class RoomControllerTests
 
         Assert.IsType<NoContentResult>(result);
 
-        var check = controller.GetById(1).Result;
-        Assert.IsType<NotFoundObjectResult>(check);
+        Assert.Throws<NotFoundException>(() => controller.GetById(1).Result);
     }
 
     [Fact]
@@ -127,8 +124,6 @@ public class RoomControllerTests
     {
         var controller = CreateControllerWithSeededData(out var context);
 
-        var result = controller.Delete(999);
-
-        Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Throws<NotFoundException>(() => controller.Delete(999));
     }
 }

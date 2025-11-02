@@ -71,9 +71,7 @@ public class CinemaControllerTests
     {
         var controller = CreateControllerWithSeededData(out _);
 
-        var result = controller.GetById(9999);
-
-        Assert.IsType<NotFoundObjectResult>(result.Result);
+        Assert.Throws<NotFoundException>(() => controller.GetById(9999));
     }
 
     [Fact]
@@ -97,8 +95,7 @@ public class CinemaControllerTests
 
         var cinema = new Cinema { Name = "Nova Cinema", Address = "", City = "Lodz" };
 
-        var result = controller.Create(cinema);
-        Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Throws<BadRequestException>(() => controller.Create(cinema));
     }
 
     [Fact]

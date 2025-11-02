@@ -26,40 +26,19 @@ public class ScreeningController : ControllerBase
     [HttpGet("{id:int}")]
     public ActionResult<Screening> GetById(int id)
     {
-        try
-        {
-            return _service.GetById(id);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
+        return _service.GetById(id);
     }
 
     [HttpGet("movie/{movieId:int}")]
     public ActionResult<List<Screening>> GetByMovie(int movieId)
     {
-        try
-        {
-            return _service.GetByMovie(movieId);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
+        return _service.GetByMovie(movieId);
     }
 
     [HttpGet("room/{roomId:int}")]
     public ActionResult<List<Screening>> GetByRoom(int roomId)
     {
-        try
-        {
-            return _service.GetByRoom(roomId);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
+        return _service.GetByRoom(roomId);
     }
 
     [HttpPost]
@@ -67,27 +46,8 @@ public class ScreeningController : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        try
-        {
-            var created = _service.Add(screening);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (DbUpdateException ex)
-        {
-            return Conflict(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
-        }
+        var created = _service.Add(screening);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
     [HttpPut("{id:int}")]
@@ -95,80 +55,28 @@ public class ScreeningController : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        try
-        {
-            _service.Update(id, screening);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (DbUpdateException ex)
-        {
-            return Conflict(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
-        }
+        _service.Update(id, screening);
+        return NoContent();
     }
 
     [HttpDelete("{id}")]
     public ActionResult DeleteById(int id)
     {
-        try
-        {
-            _service.Delete(id);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
-        } 
+        _service.Delete(id);
+        return NoContent();
     }
 
     [HttpDelete("movie/{movieId:int}")]
     public ActionResult DeleteByMovie(int movieId)
     {
-        try
-        {
-            _service.DeleteByMovie(movieId);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
-        } 
+        _service.DeleteByMovie(movieId);
+        return NoContent();
     }
 
     [HttpDelete("room/{roomId:int}")]
     public ActionResult DeleteByRoom(int roomId)
     {
-        try
-        {
-            _service.DeleteByRoom(roomId);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
-        } 
+        _service.DeleteByRoom(roomId);
+        return NoContent();
     }
 }

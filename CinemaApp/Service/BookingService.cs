@@ -32,26 +32,26 @@ public class BookingService : IBookingService
     {
         var booking = _bookingRepo.GetById(id);
         if (booking == null)
-            throw new KeyNotFoundException($"Booking with ID {id} not found.");
+            throw new NotFoundException($"Booking with ID {id} not found.");
         return booking;
     }
 
     public Booking Create(BookingCreateDto dto)
     {
         if (dto == null)
-            throw new ArgumentException("Booking data is required.");
+            throw new BadRequestException("Booking data is required.");
             
         if (dto.Tickets == null || dto.Tickets.Count == 0)
-            throw new ArgumentException("At least one ticket is required.");
+            throw new BadRequestException("At least one ticket is required.");
 
         // Validate seats and availability for the screening
         foreach (TicketCreateDto t in dto.Tickets)
         {
             if (!_ticketRepo.SeatExists(t.SeatId))
-                throw new ArgumentException($"Seat {t.SeatId} does not exist.");
+                throw new BadRequestException($"Seat {t.SeatId} does not exist.");
 
             if (_ticketRepo.IsSeatTaken(t.SeatId, dto.ScreeningId))
-                throw new InvalidOperationException($"Seat {t.SeatId} is already taken for screening {dto.ScreeningId}.");
+                throw new ConflictException($"Seat {t.SeatId} is already taken for screening {dto.ScreeningId}.");
         }
 
         // Build aggregate

@@ -31,16 +31,16 @@ public class SeatRepository : ISeatRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when adding seats.");
+                throw new ConflictException("No rows affected when adding seats.");
             return seats;
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when adding seats.", ex);
+            throw new ConflictException("Database update failed when adding seats.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when adding seats.", ex);
+            throw new Exception("Unexpected error when adding seats.", ex);
         }
     }
 
@@ -51,15 +51,15 @@ public class SeatRepository : ISeatRepository
         {
             var affected = _context.SaveChanges();
             if (affected == 0)
-                throw new InvalidOperationException("No rows affected when deleting seats.");
+                throw new ConflictException("No rows affected when deleting seats.");
         }
         catch (DbUpdateException ex)
         {
-            throw new InvalidOperationException("Database update failed when deleting seats.", ex);
+            throw new ConflictException("Database update failed when deleting seats.", ex);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error when deleting seats.", ex);
+            throw new Exception("Unexpected error when deleting seats.", ex);
         }
     }
 }

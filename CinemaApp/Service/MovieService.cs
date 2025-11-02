@@ -27,17 +27,17 @@ public class MovieService : IMovieService
     {
         var movie = _repository.GetById(id);
         if (movie == null)
-            throw new KeyNotFoundException($"Movie with ID {id} not found.");
+            throw new NotFoundException($"Movie with ID {id} not found.");
         return movie;
     }
 
     public Movie Add(Movie movie)
     {
         if (movie == null)
-            throw new ArgumentException("Movie data is required.");
+            throw new BadRequestException("Movie data is required.");
 
         if (movie.Duration <= 0)
-            throw new ArgumentException("Duration cannot be null.");
+            throw new BadRequestException("Duration cannot be null.");
 
         return _repository.Add(movie);
     }
@@ -45,11 +45,11 @@ public class MovieService : IMovieService
     public void Update(int id, Movie movie)
     {
         if (id != movie.Id)
-            throw new ArgumentException($"ID {id} and ID {movie.Id} mismatch in request objects");
+            throw new BadRequestException($"ID {id} and ID {movie.Id} mismatch in request objects");
 
         var existing = _repository.GetById(id);
         if (existing == null) 
-            throw new KeyNotFoundException($"Movie with ID {id} not found.");
+            throw new NotFoundException($"Movie with ID {id} not found.");
 
         if (!string.IsNullOrWhiteSpace(movie.Title))
             existing.Title = movie.Title.Trim();
@@ -79,7 +79,7 @@ public class MovieService : IMovieService
     {
         var movie = _repository.GetById(id);
         if (movie == null) 
-            throw new KeyNotFoundException($"Movie with ID {id} not found.");
+            throw new NotFoundException($"Movie with ID {id} not found.");
 
         _repository.Delete(movie);
     }

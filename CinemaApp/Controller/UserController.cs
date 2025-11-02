@@ -1,7 +1,6 @@
 using CinemaApp.Model;
 using CinemaApp.Service;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CinemaApp.Controller;
 
@@ -23,56 +22,26 @@ public class UserController(IUserService service) : ControllerBase
     public ActionResult<UserResponseDTO> GetById(int id)
     {
         var user = _service.Get(id);
-        if (user == null) return NotFound();
+        if (user == null) throw new NotFoundException("User not found");
         return user.ToResponse();
     }
     
     [HttpGet("email")]
     public ActionResult<UserResponseDTO> GetByEmail(string email)
     {
-        try
-        {
-            var user = _service.Get(email);
-            if (user == null) return NotFound();
-            return user.ToResponse();
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (DbUpdateException ex)
-        {
-            return Conflict(new { error = "Database constraint or update error.", details = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
-        }
+        var user = _service.Get(email);
+        if (user == null) throw new NotFoundException("User not found");
+        return user.ToResponse();
     }
 
-    [HttpPost]
-    public ActionResult Create([FromBody] UserCreateDTO dto)
+    [HttpPost("register")]
+    public ActionResult Register([FromBody] UserCreateDTO dto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        try
-        {
-            var user = _service.Add(dto);
-            var response = user.ToResponse();
-            return CreatedAtAction(nameof(GetById), new { id = user.Id }, response);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (DbUpdateException ex)
-        {
-            return Conflict(new { error = "Database constraint or update error.", details = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return StatusCode(500, new { error = "Persistence error.", details = ex.Message });
-        }
+        var user = _service.Add(dto);
+        var response = user.ToResponse();
+        return CreatedAtAction(nameof(GetById), new { id = user.Id }, response);
     }
 
     [HttpPut("{id:int}")]
@@ -80,18 +49,7 @@ public class UserController(IUserService service) : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        try
-        {
-            _service.Update(id, dto);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }      
+        _service.Update(id, dto);
+        return NoContent();  
     }
 }

@@ -85,7 +85,7 @@ namespace CinemaApp.Tests
         }
         
         [Fact]
-        public void Create_ReturnsNotFound_WhenProjectionTypeMissing()
+        public void Create_ThrowsNotFound_WhenProjectionTypeMissing()
         {
             var controller = CreateControllerWithSeededData(out var movie, out var room, out _);
 
@@ -98,10 +98,7 @@ namespace CinemaApp.Tests
                 EndTime = DateTime.UtcNow.AddHours(2)
             };
 
-            var result = controller.Create(screening);
-
-            var notFound = Assert.IsType<NotFoundObjectResult>(result);
-            Assert.Contains("ProjectionType with ID 999 not found", notFound.Value?.ToString() ?? string.Empty);
+            Assert.Throws<NotFoundException>(() => controller.Create(screening));
         }
 
         [Fact]
@@ -128,13 +125,11 @@ namespace CinemaApp.Tests
         }
 
         [Fact]
-        public void GetById_ReturnsNotFound_WhenDoesNotExist()
+        public void GetById_ThrowsFound_WhenDoesNotExist()
         {
             var controller = CreateControllerWithSeededData(out _, out _, out _);
 
-            var result = controller.GetById(999);
-
-            Assert.IsType<NotFoundObjectResult>(result.Result);
+            Assert.Throws<NotFoundException>(() => controller.GetById(999));
         }
 
         [Fact]
@@ -163,7 +158,7 @@ namespace CinemaApp.Tests
         }
 
         [Fact]
-        public void Update_ReturnsNotFound_WhenScreeningMissing()
+        public void Update_ThrowsNotFound_WhenScreeningMissing()
         {
             var controller = CreateControllerWithSeededData(out var movie, out var room, out var projectionType);
 
@@ -177,9 +172,7 @@ namespace CinemaApp.Tests
                 EndTime = DateTime.UtcNow.AddHours(2)
             };
 
-            var result = controller.Update(123, screening);
-
-            Assert.IsType<NotFoundObjectResult>(result);
+            Assert.Throws<NotFoundException>(() => controller.Update(123, screening));
         }
 
         [Fact]
@@ -195,13 +188,17 @@ namespace CinemaApp.Tests
                 StartTime = DateTime.UtcNow,
                 EndTime = DateTime.UtcNow.AddHours(2)
             };
-            controller.Create(screening);
 
-            var deleteResult = controller.DeleteById(screening.Id);
-            Assert.IsType<NoContentResult>(deleteResult);
+            // Create the screening
+            var createResult = controller.Create(screening);
+            var createdActionResult = Assert.IsType<CreatedAtActionResult>(createResult);
+            var createdScreening = Assert.IsType<Screening>(createdActionResult.Value);
 
-            var check = controller.GetById(screening.Id).Result;
-            Assert.IsType<NotFoundObjectResult>(check);
+            // Delete the screening
+            controller.DeleteById(createdScreening.Id);
+
+            // Verify that fetching it throws NotFoundException
+            Assert.Throws<NotFoundException>(() => controller.GetById(createdScreening.Id));
         }
 
         [Fact]
@@ -211,8 +208,10 @@ namespace CinemaApp.Tests
 
             var s1 = new Screening { MovieId = movie.Id, RoomId = room.Id, ProjectionTypeId = projectionType.Id, StartTime = DateTime.UtcNow, EndTime = DateTime.UtcNow.AddHours(2) };
             var s2 = new Screening { MovieId = movie.Id, RoomId = room.Id, ProjectionTypeId = projectionType.Id, StartTime = DateTime.UtcNow.AddHours(3), EndTime = DateTime.UtcNow.AddHours(5) };
-            controller.Create(s1);
-            controller.Create(s2);
+            var createResult1 = controller.Create(s1);
+            var createResult2 = controller.Create(s2);
+            Assert.IsType<CreatedAtActionResult>(createResult1);
+            Assert.IsType<CreatedAtActionResult>(createResult2);
 
             var result = controller.DeleteByMovie(movie.Id);
 

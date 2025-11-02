@@ -23,6 +23,13 @@ services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
     });;
 
+// Register exception handlers
+services.AddExceptionHandler<BadRequestExceptionHandler>();
+services.AddExceptionHandler<NotFoundExceptionHandler>();
+services.AddExceptionHandler<ConflictExceptionHandler>();
+services.AddExceptionHandler<GlobalExceptionHandler>();
+services.AddProblemDetails();
+
 // Register repositories
 services.AddScoped<ICinemaRepository, CinemaRepository>();
 services.AddScoped<IRoomRepository, RoomRepository>();
@@ -48,6 +55,7 @@ services.AddScoped<ILookupService<PersonType>, LookupService<PersonType>>();
 
 services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
+
 var app = builder.Build();
 
 // --- Configure the HTTP request pipeline.
@@ -58,7 +66,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseExceptionHandler();
 app.MapControllers();
-
 app.Run();

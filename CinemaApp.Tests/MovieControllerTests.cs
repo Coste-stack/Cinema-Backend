@@ -92,9 +92,7 @@ public class MovieControllerTests
     {
         var controller = CreateControllerWithSeededData();
 
-        var result = controller.GetById(9999);
-
-        Assert.IsType<NotFoundObjectResult>(result.Result);
+        Assert.Throws<NotFoundException>(() => controller.GetById(9999));
     }
 
     [Fact]
@@ -132,9 +130,7 @@ public class MovieControllerTests
             Genre = "Thriller"
         };
 
-        var result = controller.Update(2, movie);
-
-        Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Throws<BadRequestException>(() => controller.Update(2, movie));
     }
 
     [Fact]
@@ -149,9 +145,7 @@ public class MovieControllerTests
             Genre = "Drama"
         };
 
-        var result = controller.Update(999, movie);
-
-        Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Throws<NotFoundException>(() => controller.Update(999, movie));
     }
 
     [Fact]
@@ -185,15 +179,15 @@ public class MovieControllerTests
         var result = controller.Delete(lastMovie.Id);
 
         Assert.IsType<NoContentResult>(result);
-        var deletedResult = controller.GetById(lastMovie.Id).Result;
-        Assert.IsType<NotFoundObjectResult>(deletedResult);
+
+        Assert.Throws<NotFoundException>(() => controller.GetById(lastMovie.Id).Result);
     }
 
     [Fact]
     public void Delete_ReturnsNotFound_WhenDoesNotExist()
     {
         var controller = CreateControllerWithSeededData();
-        var result = controller.Delete(9999);
-        Assert.IsType<NotFoundObjectResult>(result);
+
+        Assert.Throws<NotFoundException>(() => controller.Delete(9999));
     }
 }

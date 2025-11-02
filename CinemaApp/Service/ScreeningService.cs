@@ -40,7 +40,7 @@ public class ScreeningService : IScreeningService
     {
         var movie = _movieRepository.GetById(movieId);
         if (movie == null)
-            throw new KeyNotFoundException($"Movie with ID {movieId} not found.");
+            throw new NotFoundException($"Movie with ID {movieId} not found.");
 
         return _repository.GetByMovie(movieId);
     }
@@ -49,7 +49,7 @@ public class ScreeningService : IScreeningService
     {
         var room = _roomRepository.GetById(roomId);
         if (room == null)
-            throw new KeyNotFoundException($"Room with ID {roomId} not found.");
+            throw new NotFoundException($"Room with ID {roomId} not found.");
 
         return _repository.GetByRoom(roomId);
     }
@@ -58,7 +58,7 @@ public class ScreeningService : IScreeningService
     {
         var screening = _repository.GetById(id);
         if (screening == null)
-            throw new KeyNotFoundException($"Screening with ID {id} not found.");
+            throw new NotFoundException($"Screening with ID {id} not found.");
 
         return screening;
     }
@@ -66,29 +66,29 @@ public class ScreeningService : IScreeningService
     public Screening Add(Screening screening)
     {
         if (screening.ProjectionTypeId <= 0)
-            throw new ArgumentException("ProjectionTypeId must be specified.");
+            throw new BadRequestException("ProjectionTypeId must be specified.");
         if (screening.MovieId <= 0)
-            throw new ArgumentException("MovieId must be specified.");
+            throw new BadRequestException("MovieId must be specified.");
         if (screening.RoomId <= 0)
-            throw new ArgumentException("RoomId must be specified.");
+            throw new BadRequestException("RoomId must be specified.");
 
         var projectionType = _projectionTypeRepository.GetById(screening.ProjectionTypeId);
         if (projectionType == null)
-            throw new KeyNotFoundException($"ProjectionType with ID {screening.ProjectionTypeId} not found.");
+            throw new NotFoundException($"ProjectionType with ID {screening.ProjectionTypeId} not found.");
 
         var movie = _movieRepository.GetById(screening.MovieId);
         if (movie == null)
-            throw new KeyNotFoundException($"Movie with ID {screening.MovieId} not found.");
+            throw new NotFoundException($"Movie with ID {screening.MovieId} not found.");
             
         var room = _roomRepository.GetById(screening.RoomId);
         if (room == null)
-            throw new KeyNotFoundException($"Room with ID {screening.RoomId} not found.");
+            throw new NotFoundException($"Room with ID {screening.RoomId} not found.");
 
         // Add movie duration to screening datetime
         screening.EndTime = screening.StartTime.AddMinutes(movie.Duration);
 
         if (screening.StartTime >= screening.EndTime)
-            throw new ArgumentException("EndTime must be after StartTime.");
+            throw new BadRequestException("EndTime must be after StartTime.");
 
         CheckOverlappingScreenings(screening);
 
@@ -98,11 +98,11 @@ public class ScreeningService : IScreeningService
     public void Update(int id, Screening screening)
     {
         if (id != screening.Id)
-        throw new ArgumentException($"ID {id} and ID {screening.Id} mismatch in request objects");
+        throw new BadRequestException($"ID {id} and ID {screening.Id} mismatch in request objects");
 
         var existing = _repository.GetById(id);
         if (existing == null)
-            throw new KeyNotFoundException($"Screening with ID {id} not found.");
+            throw new NotFoundException($"Screening with ID {id} not found.");
 
         // Determine candidate values: if caller sent "0" for ids we keep existing; otherwise use provided values.
         var newRoomId = screening.RoomId > 0 ? screening.RoomId : existing.RoomId;
@@ -112,15 +112,15 @@ public class ScreeningService : IScreeningService
         // Validate lookups for changed ids
         var projectionType = _projectionTypeRepository.GetById(newProjectionTypeId);
         if (projectionType == null)
-            throw new KeyNotFoundException($"ProjectionType with ID {newProjectionTypeId} not found.");
+            throw new NotFoundException($"ProjectionType with ID {newProjectionTypeId} not found.");
 
         var movie = _movieRepository.GetById(newMovieId);
         if (movie == null)
-            throw new KeyNotFoundException($"Movie with ID {newMovieId} not found.");
+            throw new NotFoundException($"Movie with ID {newMovieId} not found.");
 
         var room = _roomRepository.GetById(newRoomId);
         if (room == null)
-            throw new KeyNotFoundException($"Room with ID {newRoomId} not found.");
+            throw new NotFoundException($"Room with ID {newRoomId} not found.");
 
         // Decide StartTime: prefer provided non-default value; otherwise keep existing
         var newStartTime = screening.StartTime != default(DateTime) ? screening.StartTime : existing.StartTime;
@@ -138,10 +138,10 @@ public class ScreeningService : IScreeningService
         }
 
         if (newEndTime == null)
-            throw new ArgumentException("Couldnt get EndTime.");
+            throw new BadRequestException("Couldnt get EndTime.");
 
         if (newStartTime >= newEndTime.Value)
-            throw new ArgumentException("EndTime must be after StartTime.");
+            throw new BadRequestException("EndTime must be after StartTime.");
 
         // Apply changes to the existing entity
         existing.StartTime = newStartTime;
@@ -160,7 +160,7 @@ public class ScreeningService : IScreeningService
     {
         var existing = _repository.GetById(id);
         if (existing == null)
-            throw new KeyNotFoundException($"Screening with ID {id} not found.");
+            throw new NotFoundException($"Screening with ID {id} not found.");
 
         _repository.Delete(existing);
     }
@@ -169,11 +169,11 @@ public class ScreeningService : IScreeningService
     {
         var movie = _movieRepository.GetById(movieId);
         if (movie == null)
-            throw new KeyNotFoundException($"Movie with ID {movieId} not found.");
+            throw new NotFoundException($"Movie with ID {movieId} not found.");
 
         var screenings = _repository.GetByMovie(movieId);
         if (screenings.Count == 0)
-            throw new KeyNotFoundException($"No screenings found to delete for movie with ID {movieId}.");
+            throw new NotFoundException($"No screenings found to delete for movie with ID {movieId}.");
 
         _repository.DeleteRange(screenings);
     }
@@ -182,11 +182,11 @@ public class ScreeningService : IScreeningService
     {
         var movie = _roomRepository.GetById(roomId);
         if (movie == null)
-            throw new KeyNotFoundException($"Room with ID {roomId} not found.");
+            throw new NotFoundException($"Room with ID {roomId} not found.");
 
         var screenings = _repository.GetByRoom(roomId);
         if (screenings.Count == 0)
-            throw new KeyNotFoundException($"No screenings found to delete for room with ID {roomId}.");
+            throw new NotFoundException($"No screenings found to delete for room with ID {roomId}.");
 
         _repository.DeleteRange(screenings);
     }
@@ -201,6 +201,6 @@ public class ScreeningService : IScreeningService
                     s.EndTime > screening.StartTime);
 
         if (overlapping)
-            throw new InvalidOperationException("Room is already booked for this time.");
+            throw new ConflictException("Room is already booked for this time.");
     }
 }
