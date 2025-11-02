@@ -30,29 +30,24 @@ public class LookupController<T> : ControllerBase where T : LookupEntity
     [HttpPost]
     public ActionResult Create([FromBody] T projectionType)
     {
-        _service.Create(projectionType);
-        return CreatedAtAction(nameof(GetById), new { id = projectionType.Id }, projectionType);
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var existing = _service.Create(projectionType);
+        return CreatedAtAction(nameof(GetById), new { id = existing.Id }, existing);
     }
 
     [HttpPut("{id}")]
     public ActionResult Update(int id, [FromBody] T projectionType)
     {
-        if (id != projectionType.Id)
-            return BadRequest("ID mismatch");
-            
-        T? existing = _service.GetById(id);
-            if(existing == null) return NotFound();
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        _service.Update(projectionType);
+        _service.Update(id, projectionType);
         return NoContent();
     }
 
     [HttpDelete("{id}")]
     public ActionResult Delete(int id)
     {
-        T? existing = _service.GetById(id);
-        if (existing == null) return NotFound();
-
         _service.Delete(id);
         return NoContent();
     }

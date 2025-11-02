@@ -11,8 +11,12 @@ public class Movie : EntityBase
     public string? Description { get; set; }
 
     [Required]
-    [Range(1, int.MaxValue, ErrorMessage = "Duration must be positive")]
+    [Range(0, int.MaxValue, ErrorMessage = "Duration must be positive")]
     public int Duration { get; set; }
+
+    [Required]
+    [Range(0, int.MaxValue, ErrorMessage = "Base Price must be positive")]
+    public decimal BasePrice { get; set; }
 
     [StringLength(50)]
     public string? Genre { get; set; }

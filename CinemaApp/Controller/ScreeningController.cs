@@ -16,7 +16,6 @@ public class ScreeningController : ControllerBase
         _service = service;
     }
 
-
     [HttpGet]
     public ActionResult<List<Screening>> GetAll()
     {

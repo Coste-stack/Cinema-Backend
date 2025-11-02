@@ -7,15 +7,17 @@ public class Ticket : EntityBase
     public int PersonTypeId { get; set; }
     public PersonType? PersonType { get; set; }
 
-    // TODO: add ticketPriceId
+    public decimal TotalPrice { get; set; }
 
+    [Required]
     public int BookingId { get; set; }
-    public Booking? Booking { get; set; }
+    public Booking Booking { get; set; } = null!;
 
+    [Required]
     public int SeatId { get; set; }
-    public Seat? Seat { get; set; }
+    public Seat Seat { get; set; } = null!;
 
-    // for enforcing uniqueness of seat per screening at repository level
     public int ScreeningId { get; set; }
     public Screening? Screening { get; set; }
+
 }

@@ -26,6 +26,6 @@ public class TicketRepository : ITicketRepository
     {
         return _context.Tickets
             .Any(t => t.SeatId == seatId &&
-                t.ScreeningId == screeningId);
+                t.Booking.ScreeningId == screeningId);
     }
 }

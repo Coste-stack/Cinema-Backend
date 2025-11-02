@@ -62,14 +62,23 @@ public class BookingService : IBookingService
             BookingStatus = BookingStatus.Confirmed
         };
 
+        var moviePrice = _bookingRepo.GetMoviePrice(booking);
+
         // Create tickets and attach booking id
         foreach (TicketCreateDto t in dto.Tickets)
         {
+            decimal totalPrice = moviePrice;
+            decimal seatPrice = _bookingRepo.GetSeatPrice(t.SeatId);
+            decimal personPercentDiscount = _bookingRepo.GetPersonPercentDiscount(t.PersonTypeId);
+            totalPrice += seatPrice;
+            totalPrice *= (100 - personPercentDiscount)/100;
+
             Ticket ticket = new Ticket
             {
                 BookingId = booking.Id,
                 SeatId = t.SeatId,
-                PersonTypeId = t.PersonTypeId
+                PersonTypeId = t.PersonTypeId,
+                TotalPrice = totalPrice
             };
             booking.Tickets.Add(ticket);
         }

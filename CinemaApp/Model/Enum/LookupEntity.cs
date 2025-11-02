@@ -2,11 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CinemaApp.Model;
 
-public abstract class LookupEntity
+public abstract class LookupEntity : EntityBase
 {
-    [Key]
-    public int Id { get; set; }
-
     [Required]
     public string Name { get; set; } = null!;
 }

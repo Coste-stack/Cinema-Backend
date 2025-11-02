@@ -33,12 +33,6 @@ public class MovieService : IMovieService
 
     public Movie Add(Movie movie)
     {
-        if (movie == null)
-            throw new BadRequestException("Movie data is required.");
-
-        if (movie.Duration <= 0)
-            throw new BadRequestException("Duration cannot be null.");
-
         return _repository.Add(movie);
     }
 
@@ -57,11 +51,11 @@ public class MovieService : IMovieService
         if (!string.IsNullOrEmpty(movie.Description))
             existing.Description = movie.Description;
 
-        if (!string.IsNullOrEmpty(movie.Description))
-            existing.Description = movie.Description;
-
-        if (movie.Duration > 0)
+        if (movie.Duration >= 0)
             existing.Duration = movie.Duration;
+
+        if (movie.BasePrice >= 0)
+            existing.BasePrice = movie.BasePrice;
 
         if (!string.IsNullOrEmpty(movie.Genre))
             existing.Genre = movie.Genre;

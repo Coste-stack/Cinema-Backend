@@ -86,6 +86,10 @@ namespace CinemaApp.Migrations
 
                     OraclePropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal>("BasePrice")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("DECIMAL(5,2)");
+
                     b.Property<string>("Description")
                         .HasColumnType("NVARCHAR2(2000)");
 
@@ -124,9 +128,35 @@ namespace CinemaApp.Migrations
                         .IsRequired()
                         .HasColumnType("NVARCHAR2(2000)");
 
+                    b.Property<decimal>("PricePercentDiscount")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(5, 2)
+                        .HasColumnType("DECIMAL(5,2)")
+                        .HasDefaultValue(0m);
+
                     b.HasKey("Id");
 
                     b.ToTable("PersonTypes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Adult",
+                            PricePercentDiscount = 0m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Child",
+                            PricePercentDiscount = 30m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Student",
+                            PricePercentDiscount = 20m
+                        });
                 });
 
             modelBuilder.Entity("CinemaApp.Model.ProjectionType", b =>
@@ -141,6 +171,12 @@ namespace CinemaApp.Migrations
                         .IsRequired()
                         .HasColumnType("NVARCHAR2(2000)");
 
+                    b.Property<decimal>("PriceAmountDiscount")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(5, 2)
+                        .HasColumnType("DECIMAL(5,2)")
+                        .HasDefaultValue(0m);
+
                     b.HasKey("Id");
 
                     b.ToTable("ProjectionTypes");
@@ -149,12 +185,14 @@ namespace CinemaApp.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "2D"
+                            Name = "2D",
+                            PriceAmountDiscount = 0m
                         },
                         new
                         {
                             Id = 2,
-                            Name = "3D"
+                            Name = "3D",
+                            PriceAmountDiscount = 10m
                         });
                 });
 
@@ -187,6 +225,10 @@ namespace CinemaApp.Migrations
                         .HasColumnType("NUMBER(10)");
 
                     OraclePropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("BasePrice")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("DECIMAL(5,2)");
 
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("TIMESTAMP(7)");
@@ -238,9 +280,6 @@ namespace CinemaApp.Migrations
                     b.Property<int>("SeatTypeId")
                         .HasColumnType("NUMBER(10)");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("NUMBER(10)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("RoomId");
@@ -262,6 +301,12 @@ namespace CinemaApp.Migrations
                         .IsRequired()
                         .HasColumnType("NVARCHAR2(2000)");
 
+                    b.Property<decimal>("PriceAmountDiscount")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(5, 2)
+                        .HasColumnType("DECIMAL(5,2)")
+                        .HasDefaultValue(0m);
+
                     b.HasKey("Id");
 
                     b.ToTable("SeatTypes");
@@ -270,12 +315,14 @@ namespace CinemaApp.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "Regular"
+                            Name = "Regular",
+                            PriceAmountDiscount = 0m
                         },
                         new
                         {
                             Id = 2,
-                            Name = "VIP"
+                            Name = "VIP",
+                            PriceAmountDiscount = 10m
                         });
                 });
 
@@ -299,15 +346,20 @@ namespace CinemaApp.Migrations
                     b.Property<int>("SeatId")
                         .HasColumnType("NUMBER(10)");
 
+                    b.Property<decimal>("TotalPrice")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("DECIMAL(5,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BookingId");
 
-                    b.HasIndex("PersonTypeId");
+                    b.HasIndex("PersonTypeId")
+                        .IsUnique();
 
-                    b.HasIndex("SeatId");
+                    b.HasIndex("ScreeningId");
 
-                    b.HasIndex("ScreeningId", "SeatId")
+                    b.HasIndex("SeatId")
                         .IsUnique();
 
                     b.ToTable("Tickets");
@@ -348,13 +400,15 @@ namespace CinemaApp.Migrations
                         .WithMany()
                         .HasForeignKey("ScreeningId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Bookings_Screenings");
 
                     b.HasOne("CinemaApp.Model.User", "User")
                         .WithMany("Bookings")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Bookings_Users");
 
                     b.Navigation("Screening");
 
@@ -367,7 +421,8 @@ namespace CinemaApp.Migrations
                         .WithMany("Rooms")
                         .HasForeignKey("CinemaId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Rooms_Cinemas");
 
                     b.Navigation("Cinema");
                 });
@@ -378,7 +433,8 @@ namespace CinemaApp.Migrations
                         .WithMany("Screenings")
                         .HasForeignKey("MovieId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Screenings_Movies");
 
                     b.HasOne("CinemaApp.Model.ProjectionType", "ProjectionType")
                         .WithMany()
@@ -390,7 +446,8 @@ namespace CinemaApp.Migrations
                         .WithMany("Screenings")
                         .HasForeignKey("RoomId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Screenings_Rooms");
 
                     b.Navigation("Movie");
 
@@ -405,7 +462,8 @@ namespace CinemaApp.Migrations
                         .WithMany("Seats")
                         .HasForeignKey("RoomId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Seats_Rooms");
 
                     b.HasOne("CinemaApp.Model.SeatType", "SeatType")
                         .WithMany()
@@ -424,13 +482,15 @@ namespace CinemaApp.Migrations
                         .WithMany("Tickets")
                         .HasForeignKey("BookingId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Tickets_Bookings");
 
                     b.HasOne("CinemaApp.Model.PersonType", "PersonType")
-                        .WithMany()
-                        .HasForeignKey("PersonTypeId")
+                        .WithOne()
+                        .HasForeignKey("CinemaApp.Model.Ticket", "PersonTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Tickets_PersonType");
 
                     b.HasOne("CinemaApp.Model.Screening", "Screening")
                         .WithMany()
@@ -439,10 +499,11 @@ namespace CinemaApp.Migrations
                         .IsRequired();
 
                     b.HasOne("CinemaApp.Model.Seat", "Seat")
-                        .WithMany()
-                        .HasForeignKey("SeatId")
+                        .WithOne()
+                        .HasForeignKey("CinemaApp.Model.Ticket", "SeatId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Tickets_Seat");
 
                     b.Navigation("Booking");
 

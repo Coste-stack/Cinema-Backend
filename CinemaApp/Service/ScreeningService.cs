@@ -84,8 +84,9 @@ public class ScreeningService : IScreeningService
         if (room == null)
             throw new NotFoundException($"Room with ID {screening.RoomId} not found.");
 
-        // Add movie duration to screening datetime
+        // Add movie duration and price to screening datetime
         screening.EndTime = screening.StartTime.AddMinutes(movie.Duration);
+        screening.BasePrice = movie.BasePrice - projectionType.PriceAmountDiscount;
 
         if (screening.StartTime >= screening.EndTime)
             throw new BadRequestException("EndTime must be after StartTime.");

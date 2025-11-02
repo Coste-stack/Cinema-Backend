@@ -10,6 +10,9 @@ public interface IBookingRepository
     List<Booking> GetAll();
     Booking? GetById(int id);
     Booking Add(Booking booking);
+    decimal GetMoviePrice(Booking booking);
+    decimal GetSeatPrice(int seatId);
+    decimal GetPersonPercentDiscount(int personTypeId);
 }
 
 public class BookingRepository : IBookingRepository
@@ -27,9 +30,12 @@ public class BookingRepository : IBookingRepository
 
     public Booking? GetById(int id)
     {
-        // include tickets if you want them returned with booking
+        // Include tickets
         return _context.Bookings
-            .Include(b => b.Screening)
+            .Include(b => b.Tickets)
+                .ThenInclude(t => t.Seat)
+            .Include(b => b.Tickets)
+                .ThenInclude(t => t.PersonType)
             .FirstOrDefault(b => b.Id == id);
     }
 
@@ -51,5 +57,35 @@ public class BookingRepository : IBookingRepository
         {
             throw new Exception("Unexpected error when adding a booking.", ex);
         }
+    }
+
+    public decimal GetMoviePrice(Booking booking)
+    {
+        var price = _context.Bookings
+            .Where(b => b.Id == booking.Id)
+            .Select(b => b.Screening!.Movie.BasePrice)
+            .FirstOrDefault();
+
+        return price;
+    }
+
+    public decimal GetSeatPrice(int seatId)
+    {
+        var price = _context.Seats
+            .Where(s => s.Id == seatId)
+            .Select(s => s.SeatType.PriceAmountDiscount)
+            .FirstOrDefault();
+
+        return price;
+    }
+    
+    public decimal GetPersonPercentDiscount(int personTypeId)
+    {
+        var price = _context.PersonTypes
+            .Where(p => p.Id == personTypeId)
+            .Select(p => p.PricePercentDiscount)
+            .FirstOrDefault();
+    
+        return price;
     }
 }

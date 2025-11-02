@@ -7,8 +7,8 @@ public interface ILookupService<T> where T : LookupEntity
 {
     List<T> GetAll();
     T? GetById(int id);
-    void Create(T entity);
-    void Update(T entity);
+    T Create(T entity);
+    void Update(int id, T entity);
     void Delete(int id);
 }
 
@@ -25,9 +25,27 @@ public class LookupService<T> : ILookupService<T> where T : LookupEntity
 
     public T? GetById(int id) => _repository.GetById(id);
 
-    public void Create(T projectionType) => _repository.Add(projectionType);
+    public T Create(T projectionType)
+    {
+        return _repository.Add(projectionType);
+    }
 
-    public void Update(T projectionType) => _repository.Update(projectionType);
+    public void Update(int id, T projectionType)
+    {
+        if (id != projectionType.Id) throw new BadRequestException("Enum ID mismatch in update.");
+            
+        var existing = _repository.GetById(id);
+        if (existing == null) throw new NotFoundException("Enum not found to update.");
 
-    public void Delete(int id) => _repository.Delete(id);
+        existing.Name = projectionType.Name;
+        _repository.Update(projectionType);
+    } 
+
+    public void Delete(int id)
+    {
+        var existing = _repository.GetById(id);
+        if (existing == null) throw new NotFoundException("Enum not found to delete.");
+
+        _repository.Delete(existing);
+    } 
 }

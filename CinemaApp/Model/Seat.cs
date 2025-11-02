@@ -13,7 +13,7 @@ public class Seat : EntityBase
 
     [Required]
     public int SeatTypeId { get; set; }
-    public SeatType? SeatType { get; set; }
+    public SeatType SeatType { get; set; } = null!;
 
     public int RoomId { get; set; }
     public Room? Room { get; set; }

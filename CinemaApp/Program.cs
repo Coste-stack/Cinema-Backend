@@ -55,7 +55,6 @@ services.AddScoped<ILookupService<PersonType>, LookupService<PersonType>>();
 
 services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
-
 var app = builder.Build();
 
 // --- Configure the HTTP request pipeline.

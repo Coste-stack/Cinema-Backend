@@ -9,8 +9,4 @@ public class TicketCreateDto
     
     [Required]
     public int PersonTypeId { get; set; }
-    
-    // TODO: add ticketPriceId
-    // [Required] 
-    // public int TicketPriceId { get; set; }
 }
