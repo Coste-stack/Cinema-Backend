@@ -27,14 +27,21 @@ public class MovieControllerTests
     {
         var context = CreateTestDbContext();
 
+        // Seed genres first
+        var genreSciFi = new Genre { Id = 1, Name = "Sci-Fi" };
+        var genreAction = new Genre { Id = 2, Name = "Action" };
+        var genreThriller = new Genre { Id = 3, Name = "Thriller" };
+        context.Genres.AddRange(genreSciFi, genreAction, genreThriller);
+        context.SaveChanges();
+
         Movie movie1 = new()
         {
             Title = "Inception",
             Description = "A mind-bending thriller about dreams within dreams.",
             Duration = 148,
-            Genre = "Sci-Fi",
             Rating = MovieRating.PG13,
-            ReleaseDate = new DateTime(2010, 7, 16)
+            ReleaseDate = new DateTime(2010, 7, 16),
+            Genres = new List<Genre> { genreSciFi, genreThriller }
         };
 
         Movie movie2 = new()
@@ -42,9 +49,9 @@ public class MovieControllerTests
             Title = "The Dark Knight",
             Description = "Batman faces the Joker in Gotham City.",
             Duration = 152,
-            Genre = "Action",
             Rating = MovieRating.PG13,
-            ReleaseDate = new DateTime(2008, 7, 18)
+            ReleaseDate = new DateTime(2008, 7, 18),
+            Genres = new List<Genre> { genreAction, genreThriller }
         };
 
         context.Movies.AddRange(movie1, movie2);
@@ -98,16 +105,25 @@ public class MovieControllerTests
     [Fact]
     public void Create_AddsMovieAndReturnsCreated()
     {
-        var controller = CreateControllerWithSeededData();
+        var context = CreateTestDbContext();
+        
+        // Seed genres
+        var genreSciFi = new Genre { Id = 1, Name = "Sci-Fi" };
+        context.Genres.Add(genreSciFi);
+        context.SaveChanges();
+
+        IMovieRepository repository = new MovieRepository(context);
+        IMovieService service = new MovieService(repository);
+        var controller = new MovieController(service);
 
         var movie = new Movie
         {
             Title = "Interstellar",
             Description = "Exploration of space and time.",
             Duration = 169,
-            Genre = "Sci-Fi",
             Rating = MovieRating.PG13,
-            ReleaseDate = new DateTime(2014, 11, 7)
+            ReleaseDate = new DateTime(2014, 11, 7),
+            Genres = new List<Genre> { genreSciFi }
         };
 
         var result = controller.Create(movie);
@@ -126,8 +142,7 @@ public class MovieControllerTests
         {
             Id = 1,
             Title = "Inception Updated",
-            Duration = 150,
-            Genre = "Thriller"
+            Duration = 150
         };
 
         Assert.Throws<BadRequestException>(() => controller.Update(2, movie));
@@ -141,8 +156,7 @@ public class MovieControllerTests
         {
             Id = 999,
             Title = "Nonexistent Movie",
-            Duration = 120,
-            Genre = "Drama"
+            Duration = 120
         };
 
         Assert.Throws<NotFoundException>(() => controller.Update(999, movie));
@@ -151,20 +165,41 @@ public class MovieControllerTests
     [Fact]
     public void Update_UpdatesMovie_WhenExists()
     {
-        var controller = CreateControllerWithSeededData();
+        var context = CreateTestDbContext();
+        
+        // Seed genres
+        var genreSciFi = new Genre { Id = 1, Name = "Sci-Fi" };
+        var genreAction = new Genre { Id = 2, Name = "Action" };
+        context.Genres.AddRange(genreSciFi, genreAction);
+        context.SaveChanges();
+        
+        // Seed a movie with genre
+        var existingMovie = new Movie
+        {
+            Title = "Inception",
+            Duration = 148,
+            Genres = new List<Genre> { genreSciFi }
+        };
+        context.Movies.Add(existingMovie);
+        context.SaveChanges();
+
+        IMovieRepository repository = new MovieRepository(context);
+        IMovieService service = new MovieService(repository);
+        var controller = new MovieController(service);
+
         var movie = new Movie
         {
-            Id = 1,
+            Id = existingMovie.Id,
             Title = "Inception Reloaded",
             Duration = 155,
-            Genre = "Sci-Fi"
+            Genres = new List<Genre> { genreAction }
         };
 
-        var result = controller.Update(1, movie);
+        var result = controller.Update(existingMovie.Id, movie);
 
         Assert.IsType<NoContentResult>(result);
 
-        var updated = controller.GetById(1).Value!;
+        var updated = controller.GetById(existingMovie.Id).Value!;
         Assert.Equal("Inception Reloaded", updated.Title);
         Assert.Equal(155, updated.Duration);
     }

@@ -28,7 +28,7 @@ namespace CinemaApp.Tests
             var context = CreateTestDbContext();
 
             // Seed movie, room, projection type
-            movie = new Movie { Title = "Inception", Duration = 120, Genre = "Sci-Fi" };
+            movie = new Movie { Title = "Inception", Duration = 120 };
             room = new Room { Name = "Room 1" };
             projectionType = new ProjectionType { Name = "2D" };
 

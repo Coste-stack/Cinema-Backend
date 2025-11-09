@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CinemaApp.Model.Attributes;
 
 namespace CinemaApp.Model;
 
@@ -18,8 +19,8 @@ public class Movie : EntityBase
     [Range(0, int.MaxValue, ErrorMessage = "Base Price must be positive")]
     public decimal BasePrice { get; set; }
 
-    [StringLength(50)]
-    public string? Genre { get; set; }
+    [MinimumCount(1, ErrorMessage = "At least one genre must be specified.")]
+    public ICollection<Genre> Genres { get; set; } = new List<Genre>();
 
     [EnumDataType(typeof(MovieRating))]
     public MovieRating? Rating { get; set; }

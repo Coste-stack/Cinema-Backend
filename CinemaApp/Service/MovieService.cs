@@ -33,6 +33,9 @@ public class MovieService : IMovieService
 
     public Movie Add(Movie movie)
     {
+        if (movie.Genres == null || !movie.Genres.Any())
+            throw new BadRequestException("At least one genre must be specified for the movie.");
+            
         return _repository.Add(movie);
     }
 
@@ -57,8 +60,18 @@ public class MovieService : IMovieService
         if (movie.BasePrice >= 0)
             existing.BasePrice = movie.BasePrice;
 
-        if (!string.IsNullOrEmpty(movie.Genre))
-            existing.Genre = movie.Genre;
+        if (movie.Genres != null && movie.Genres.Any())
+        {
+            existing.Genres.Clear();
+            foreach (var genre in movie.Genres)
+            {
+                existing.Genres.Add(genre);
+            }
+        }
+        
+        // Ensure at least one genre remains
+        if (!existing.Genres.Any())
+            throw new BadRequestException("At least one genre must be specified for the movie.");
 
         if (movie.Rating != null)
             existing.Rating = movie.Rating;

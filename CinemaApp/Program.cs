@@ -41,6 +41,7 @@ services.AddScoped<ITicketRepository, TicketRepository>();
 services.AddScoped<ILookupRepository<ProjectionType>, LookupRepository<ProjectionType>>();
 services.AddScoped<ILookupRepository<SeatType>, LookupRepository<SeatType>>();
 services.AddScoped<ILookupRepository<PersonType>, LookupRepository<PersonType>>();
+services.AddScoped<ILookupRepository<Genre>, LookupRepository<Genre>>();
 
 // Register services
 services.AddScoped<ICinemaService, CinemaService>();
@@ -52,6 +53,7 @@ services.AddScoped<IBookingService, BookingService>();
 services.AddScoped<ILookupService<ProjectionType>, LookupService<ProjectionType>>();
 services.AddScoped<ILookupService<SeatType>, LookupService<SeatType>>();
 services.AddScoped<ILookupService<PersonType>, LookupService<PersonType>>();
+services.AddScoped<ILookupService<Genre>, LookupService<Genre>>();
 
 services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 

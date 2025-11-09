@@ -24,6 +24,7 @@ public class AppDbContext : DbContext
     public DbSet<ProjectionType> ProjectionTypes { get; set; }
     public DbSet<SeatType> SeatTypes { get; set; }
     public DbSet<PersonType> PersonTypes { get; set; }
+    public DbSet<Genre> Genres { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -50,6 +51,12 @@ public class AppDbContext : DbContext
             .HasForeignKey(s => s.MovieId)
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_Screenings_Movies");
+
+        // Movie(Many) - Genre(Many)
+        modelBuilder.Entity<Movie>()
+            .HasMany(m => m.Genres)
+            .WithMany(g => g.Movies)
+            .UsingEntity(j => j.ToTable("MovieGenres"));
 
         // Room(One) - Screening(Many)
         modelBuilder.Entity<Room>()
@@ -159,6 +166,23 @@ public class AppDbContext : DbContext
                 new PersonType { Id = 1, Name = "Adult", PricePercentDiscount = 0 },
                 new PersonType { Id = 2, Name = "Child", PricePercentDiscount = 30 },
                 new PersonType { Id = 3, Name = "Student", PricePercentDiscount = 20 }
+            );
+        });
+
+        // Seed Genre table
+        modelBuilder.Entity<Genre>(entity =>
+        {
+            entity.HasData(
+                new Genre { Id = 1, Name = "Action" },
+                new Genre { Id = 2, Name = "Comedy" },
+                new Genre { Id = 3, Name = "Drama" },
+                new Genre { Id = 4, Name = "Horror" },
+                new Genre { Id = 5, Name = "Science Fiction" },
+                new Genre { Id = 6, Name = "Thriller" },
+                new Genre { Id = 7, Name = "Romance" },
+                new Genre { Id = 8, Name = "Adventure" },
+                new Genre { Id = 9, Name = "Animation" },
+                new Genre { Id = 10, Name = "Documentary" }
             );
         });
 

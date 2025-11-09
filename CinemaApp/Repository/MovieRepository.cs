@@ -20,9 +20,9 @@ public class MovieRepository : IMovieRepository
 
     public MovieRepository(AppDbContext context) => _context = context;
 
-    public List<Movie> GetAll() => _context.Movies.ToList();
+    public List<Movie> GetAll() => _context.Movies.Include(m => m.Genres).ToList();
 
-    public Movie? GetById(int id) => _context.Movies.Find(id);
+    public Movie? GetById(int id) => _context.Movies.Include(m => m.Genres).FirstOrDefault(m => m.Id == id);
 
     public Movie Add(Movie movie)
     {
