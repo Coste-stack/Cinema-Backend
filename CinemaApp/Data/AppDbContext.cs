@@ -66,6 +66,22 @@ public class AppDbContext : DbContext
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_Screenings_Rooms");
 
+        // Screening(Many) - ProjectionType(One)
+        modelBuilder.Entity<Screening>()
+            .HasOne(s => s.ProjectionType)
+            .WithMany()
+            .HasForeignKey(s => s.ProjectionTypeId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_Screenings_ProjectionTypes");
+
+        // Seat(Many) - SeatType(One)
+        modelBuilder.Entity<Seat>()
+            .HasOne(s => s.SeatType)
+            .WithMany()
+            .HasForeignKey(s => s.SeatTypeId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_Seats_SeatTypes");
+
         // Booking(One) - Ticket(Many)
         modelBuilder.Entity<Booking>()
             .HasMany(b => b.Tickets)
@@ -82,12 +98,12 @@ public class AppDbContext : DbContext
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_Tickets_Seat");
 
-        // Ticket(One) - PersonType(One)
+        // Ticket(Many) - PersonType(One)
         modelBuilder.Entity<Ticket>()
             .HasOne(t => t.PersonType)
-            .WithOne()
-            .HasForeignKey<Ticket>(t => t.PersonTypeId)
-            .OnDelete(DeleteBehavior.Cascade)
+            .WithMany()
+            .HasForeignKey(t => t.PersonTypeId)
+            .OnDelete(DeleteBehavior.Restrict)
             .HasConstraintName("FK_Tickets_PersonType");
 
         // User(One) - Booking(Many)
