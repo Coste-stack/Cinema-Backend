@@ -3,9 +3,7 @@ using CinemaApp.Repository;
 using CinemaApp.Service;
 using CinemaApp.Controller;
 using CinemaApp.Data;
-
-using System;
-using Microsoft.EntityFrameworkCore;
+using CinemaApp.Tests.Helpers;
 using System.Collections.Generic;
 using Xunit;
 using Microsoft.AspNetCore.Mvc;
@@ -14,29 +12,14 @@ namespace CinemaApp.Tests;
 
 public class CinemaControllerTests
 {
-    private static AppDbContext CreateTestDbContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-
-        return new AppDbContext(options);
-    }
-
     private static CinemaController CreateControllerWithSeededData(out AppDbContext context)
     {
-        context = CreateTestDbContext();
-
-        var cinema1 = new Cinema { Name = "Cinema Galaxy", Address = "Main Street 10", City = "Warsaw" };
-        var cinema2 = new Cinema { Name = "MegaFilm", Address = "Broadway 15", City = "Krakow" };
-
-        context.Cinemas.AddRange(cinema1, cinema2);
-        context.SaveChanges();
+        context = TestDataSeeder.CreateTestDbContext();
+        TestDataSeeder.SeedMultipleCinemas(context);
 
         var repository = new CinemaRepository(context);
         var service = new CinemaService(repository);
-        var controller = new CinemaController(service);
-        return controller;
+        return new CinemaController(service);
     }
 
     [Fact]

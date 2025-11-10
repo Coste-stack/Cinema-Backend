@@ -3,7 +3,7 @@ using CinemaApp.Service;
 using CinemaApp.Controller;
 using CinemaApp.Data;
 using CinemaApp.Repository;
-using Microsoft.EntityFrameworkCore;
+using CinemaApp.Tests.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using Xunit;
@@ -14,43 +14,16 @@ namespace CinemaApp.Tests;
 
 public class UserControllerTests
 {
-    private static AppDbContext CreateTestDbContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(System.Guid.NewGuid().ToString())
-            .Options;
-
-        return new AppDbContext(options);
-    }
-
     private static UserController CreateControllerWithSeededData(out AppDbContext context, out PasswordHasher<User> passwordHasher)
     {
-        context = CreateTestDbContext();
-
+        context = TestDataSeeder.CreateTestDbContext();
         passwordHasher = new PasswordHasher<User>();
-
-        // Seed users
-        var guest = new User
-        {
-            Email = "guest@example.com",
-            UserType = UserType.Guest
-        };
-
-        var registered = new User
-        {
-            Email = "reg@example.com",
-            UserType = UserType.Registered
-        };
-        registered.PasswordHash = passwordHasher.HashPassword(registered, "InitialPass1!");
-
-        context.Users.AddRange(guest, registered);
-        context.SaveChanges();
+        
+        TestDataSeeder.SeedUsersForAuthTests(context, passwordHasher);
 
         var repo = new UserRepository(context);
         var service = new UserService(repo, passwordHasher);
-        var controller = new UserController(service);
-
-        return controller;
+        return new UserController(service);
     }
 
     [Fact]

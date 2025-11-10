@@ -3,9 +3,7 @@ using CinemaApp.Repository;
 using CinemaApp.Service;
 using CinemaApp.Controller;
 using CinemaApp.Data;
-
-using System;
-using Microsoft.EntityFrameworkCore;
+using CinemaApp.Tests.Helpers;
 using System.Collections.Generic;
 using Xunit;
 using Microsoft.AspNetCore.Mvc;
@@ -14,34 +12,14 @@ namespace CinemaApp.Tests;
 
 public class RoomControllerTests
 {
-    private static AppDbContext CreateTestDbContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-
-        return new AppDbContext(options);
-    }
-
     private static RoomController CreateControllerWithSeededData(out AppDbContext context)
     {
-        context = CreateTestDbContext();
-
-        // Create a cinema to link rooms to
-        var cinema = new Cinema { Name = "Cinema Galaxy", Address = "Main Street 10", City = "Warsaw" };
-        context.Cinemas.Add(cinema);
-        context.SaveChanges();
-
-        var room1 = new Room { Name = "Room A", CinemaId = cinema.Id };
-        var room2 = new Room { Name = "Room B", CinemaId = cinema.Id };
-
-        context.Rooms.AddRange(room1, room2);
-        context.SaveChanges();
+        context = TestDataSeeder.CreateTestDbContext();
+        var cinemas = TestDataSeeder.SeedMultipleCinemas(context);
+        TestDataSeeder.SeedMultipleRooms(context, cinemas[0].Id);
 
         IRoomRepository repository = new RoomRepository(context);
         IRoomService service = new RoomService(repository);
-
-        // Note: RoomController constructor takes (IRoomService, ICinemaService)
         return new RoomController(service);
     }
 

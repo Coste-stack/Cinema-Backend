@@ -3,9 +3,8 @@ using CinemaApp.Repository;
 using CinemaApp.Service;
 using CinemaApp.Controller;
 using CinemaApp.Data;
-
+using CinemaApp.Tests.Helpers;
 using System;
-using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using Xunit;
 using Microsoft.AspNetCore.Mvc;
@@ -14,48 +13,10 @@ namespace CinemaApp.Tests;
 
 public class MovieControllerTests
 {
-    private static AppDbContext CreateTestDbContext()
-    {
-        DbContextOptions<AppDbContext> options =
-            new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString()) // unique DB per test
-                .Options;
-        return new AppDbContext(options);
-    }
-
     private static MovieController CreateControllerWithSeededData()
     {
-        var context = CreateTestDbContext();
-
-        // Seed genres first
-        var genreSciFi = new Genre { Id = 1, Name = "Sci-Fi" };
-        var genreAction = new Genre { Id = 2, Name = "Action" };
-        var genreThriller = new Genre { Id = 3, Name = "Thriller" };
-        context.Genres.AddRange(genreSciFi, genreAction, genreThriller);
-        context.SaveChanges();
-
-        Movie movie1 = new()
-        {
-            Title = "Inception",
-            Description = "A mind-bending thriller about dreams within dreams.",
-            Duration = 148,
-            Rating = MovieRating.PG13,
-            ReleaseDate = new DateTime(2010, 7, 16),
-            Genres = new List<Genre> { genreSciFi, genreThriller }
-        };
-
-        Movie movie2 = new()
-        {
-            Title = "The Dark Knight",
-            Description = "Batman faces the Joker in Gotham City.",
-            Duration = 152,
-            Rating = MovieRating.PG13,
-            ReleaseDate = new DateTime(2008, 7, 18),
-            Genres = new List<Genre> { genreAction, genreThriller }
-        };
-
-        context.Movies.AddRange(movie1, movie2);
-        context.SaveChanges();
+        var context = TestDataSeeder.CreateTestDbContext();
+        TestDataSeeder.SeedMoviesWithGenres(context);
 
         IMovieRepository repository = new MovieRepository(context);
         IMovieService service = new MovieService(repository);
@@ -65,7 +26,7 @@ public class MovieControllerTests
     [Fact]
     public void Test_DbContext_Creation()
     {
-        var context = CreateTestDbContext();
+        var context = TestDataSeeder.CreateTestDbContext();
         Assert.NotNull(context);
     }
 
@@ -105,12 +66,8 @@ public class MovieControllerTests
     [Fact]
     public void Create_AddsMovieAndReturnsCreated()
     {
-        var context = CreateTestDbContext();
-        
-        // Seed genres
-        var genreSciFi = new Genre { Id = 1, Name = "Sci-Fi" };
-        context.Genres.Add(genreSciFi);
-        context.SaveChanges();
+        var context = TestDataSeeder.CreateTestDbContext();
+        var genreSciFi = TestDataSeeder.SeedGenre(context, "Sci-Fi");
 
         IMovieRepository repository = new MovieRepository(context);
         IMovieService service = new MovieService(repository);
@@ -165,13 +122,10 @@ public class MovieControllerTests
     [Fact]
     public void Update_UpdatesMovie_WhenExists()
     {
-        var context = CreateTestDbContext();
+        var context = TestDataSeeder.CreateTestDbContext();
         
-        // Seed genres
-        var genreSciFi = new Genre { Id = 1, Name = "Sci-Fi" };
-        var genreAction = new Genre { Id = 2, Name = "Action" };
-        context.Genres.AddRange(genreSciFi, genreAction);
-        context.SaveChanges();
+        var genreSciFi = TestDataSeeder.SeedGenre(context, "Sci-Fi");
+        var genreAction = TestDataSeeder.SeedGenre(context, "Action");
         
         // Seed a movie with genre
         var existingMovie = new Movie

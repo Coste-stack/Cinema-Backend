@@ -1,12 +1,9 @@
 using CinemaApp.Controller;
-using CinemaApp.Data;
 using CinemaApp.DTO.Ticket;
-using CinemaApp.Model;
 using CinemaApp.Repository;
 using CinemaApp.Service;
+using CinemaApp.Tests.Helpers;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
 using Xunit;
 
@@ -14,75 +11,23 @@ namespace CinemaApp.Tests;
 
 public class PriceControllerTests
 {
-    private static AppDbContext CreateTestDbContext()
+    private static PriceController CreateControllerWithSeededData(out int screeningId, out int regularSeatId, out int vipSeatId)
     {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        return new AppDbContext(options);
-    }
+        var context = TestDataSeeder.CreateTestDbContext();
+        TestDataSeeder.SeedLookupData(context);
 
-    private static PriceController CreateControllerWithSeededData(out int screeningId, out int seatId1, out int seatId2)
-    {
-        var context = CreateTestDbContext();
+        var (cinema, room, seats) = TestDataSeeder.SeedCinemaWithRoomAndSeats(context, regularSeats: 2, vipSeats: 2);
+        var movie = TestDataSeeder.SeedMovie(context, basePrice: 10.00m);
+        var screening = TestDataSeeder.SeedScreening(context, movie.Id, room.Id, basePrice: 12.00m);
 
-        // Seed lookup data
-        var seatTypeRegular = new SeatType { Id = 1, Name = "Regular", PriceAmountDiscount = 0 };
-        var seatTypeVIP = new SeatType { Id = 2, Name = "VIP", PriceAmountDiscount = 5 };
-        var personTypeAdult = new PersonType { Id = 1, Name = "Adult", PricePercentDiscount = 0 };
-        var personTypeChild = new PersonType { Id = 2, Name = "Child", PricePercentDiscount = 30 };
-        var projectionType2D = new ProjectionType { Id = 1, Name = "2D", PriceAmountDiscount = 0 };
-
-        context.SeatTypes.AddRange(seatTypeRegular, seatTypeVIP);
-        context.PersonTypes.AddRange(personTypeAdult, personTypeChild);
-        context.ProjectionTypes.Add(projectionType2D);
-        context.SaveChanges();
-
-        // Seed cinema, room, movie
-        var cinema = new Cinema { Name = "Test Cinema", Address = "123 Test St", City = "Test City" };
-        context.Cinemas.Add(cinema);
-        context.SaveChanges();
-
-        var room = new Room { Name = "Room 1", CinemaId = cinema.Id };
-        context.Rooms.Add(room);
-        context.SaveChanges();
-
-        var movie = new Movie 
-        { 
-            Title = "Test Movie", 
-            Duration = 120, 
-            BasePrice = 10.00m 
-        };
-        context.Movies.Add(movie);
-        context.SaveChanges();
-
-        // Seed seats
-        var seat1 = new Seat { Row = "A", Number = 1, RoomId = room.Id, SeatTypeId = seatTypeRegular.Id };
-        var seat2 = new Seat { Row = "A", Number = 2, RoomId = room.Id, SeatTypeId = seatTypeVIP.Id };
-        context.Seats.AddRange(seat1, seat2);
-        context.SaveChanges();
-
-        seatId1 = seat1.Id;
-        seatId2 = seat2.Id;
-
-        // Seed screening
-        var screening = new Screening
-        {
-            MovieId = movie.Id,
-            RoomId = room.Id,
-            ProjectionTypeId = projectionType2D.Id,
-            StartTime = DateTime.Now.AddDays(1),
-            BasePrice = 12.00m
-        };
-        context.Screenings.Add(screening);
-        context.SaveChanges();
-
+        regularSeatId = seats[0].Id; // First regular seat
+        vipSeatId = seats[2].Id;     // First VIP seat
         screeningId = screening.Id;
 
-        // Create service and controller
         var bookingRepo = new BookingRepository(context);
         var screeningRepo = new ScreeningRepository(context);
         var priceService = new PriceCalculationService(bookingRepo, screeningRepo);
+        
         return new PriceController(priceService);
     }
 

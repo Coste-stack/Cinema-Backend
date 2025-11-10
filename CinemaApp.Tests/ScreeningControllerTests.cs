@@ -6,36 +6,25 @@ using CinemaApp.Data;
 using CinemaApp.Model;
 using CinemaApp.Repository;
 using CinemaApp.Service;
+using CinemaApp.Tests.Helpers;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace CinemaApp.Tests
 {
     public class ScreeningControllerTests
     {
-        private static AppDbContext CreateTestDbContext()
-        {
-            var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
-
-            return new AppDbContext(options);
-        }
-
         private static ScreeningController CreateControllerWithSeededData(out Movie movie, out Room room, out ProjectionType projectionType)
         {
-            var context = CreateTestDbContext();
+            var context = TestDataSeeder.CreateTestDbContext();
+            TestDataSeeder.SeedLookupData(context);
 
-            // Seed movie, room, projection type
-            movie = new Movie { Title = "Inception", Duration = 120 };
-            room = new Room { Name = "Room 1" };
-            projectionType = new ProjectionType { Name = "2D" };
+            var (cinema, roomSeeded) = TestDataSeeder.SeedCinemaWithRoom(context);
+            room = roomSeeded;
 
-            context.Movies.Add(movie);
-            context.Rooms.Add(room);
-            context.ProjectionTypes.Add(projectionType);
-            context.SaveChanges();
+            movie = TestDataSeeder.SeedMovie(context, title: "Inception", duration: 120);
+            
+            projectionType = context.ProjectionTypes.Find(1)!; // 2D from SeedLookupData
 
             // Set up dependencies
             ILookupRepository<ProjectionType> projectionTypeRepo = new LookupRepository<ProjectionType>(context);

@@ -2,7 +2,7 @@
 using CinemaApp.Service;
 using CinemaApp.Controller;
 using CinemaApp.Data;
-using Microsoft.EntityFrameworkCore;
+using CinemaApp.Tests.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Xunit;
 using System.Collections.Generic;
@@ -13,41 +13,14 @@ namespace CinemaApp.Tests;
 
 public class SeatControllerTests
 {
-    private static AppDbContext CreateTestDbContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(System.Guid.NewGuid().ToString())
-            .Options;
-
-        return new AppDbContext(options);
-    }
-
     private static SeatController CreateControllerWithSeededData(out AppDbContext context)
     {
-        context = CreateTestDbContext();
-
-        // Seed a cinema and a room
-        var cinema = new Cinema { Name = "Cinema Galaxy", Address = "Main Street 10", City = "Warsaw" };
-        context.Cinemas.Add(cinema);
-        context.SaveChanges();
-
-        var room = new Room { Name = "Room 1", CinemaId = cinema.Id };
-        context.Rooms.Add(room);
-        context.SaveChanges();
-
-        // Seed a SeatType
-        var seatType = new SeatType { Name = "Regular" };
-        context.SeatTypes.Add(seatType);
-        context.SaveChanges();
-
-        // Seed seats
-        var seat1 = new Seat { RoomId = room.Id, Row = "A", Number = 1, SeatTypeId = seatType.Id };
-        var seat2 = new Seat { RoomId = room.Id, Row = "A", Number = 2, SeatTypeId = seatType.Id };
-        context.Seats.AddRange(seat1, seat2);
-        context.SaveChanges();
+        context = TestDataSeeder.CreateTestDbContext();
+        TestDataSeeder.SeedLookupData(context);
+        
+        var (cinema, room, seats) = TestDataSeeder.SeedCinemaWithRoomAndSeats(context, regularSeats: 2, vipSeats: 0);
 
         ISeatService seatService = new SeatService(new SeatRepository(context), new RoomRepository(context));
-
         return new SeatController(seatService);
     }
 

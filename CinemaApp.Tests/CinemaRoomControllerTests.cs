@@ -1,42 +1,23 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Xunit;
 using CinemaApp.Model;
 using CinemaApp.Data;
 using CinemaApp.Repository;
 using CinemaApp.Service;
 using CinemaApp.Controller;
+using CinemaApp.Tests.Helpers;
 
 namespace CinemaApp.Tests
 {
     public class CinemaRoomControllerTests
     {
-        // Helper: create a fresh in-memory database for each test
-        private static AppDbContext CreateTestDbContext()
-        {
-            var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
-            return new AppDbContext(options);
-        }
-
         // Helper: seed data and create controllers
         private static (CinemaController cinemaController, RoomController roomController) CreateControllersWithSeedData()
         {
-            var context = CreateTestDbContext();
-
-            // Seed one cinema
-            var cinema = new Cinema
-            {
-                Name = "Cinema Galaxy",
-                Address = "Main Street 10",
-                City = "Warsaw"
-            };
-            context.Cinemas.Add(cinema);
-            context.SaveChanges();
+            var context = TestDataSeeder.CreateTestDbContext();
+            TestDataSeeder.SeedMultipleCinemas(context);
 
             // Create repositories and services
             ICinemaRepository cinemaRepo = new CinemaRepository(context);
