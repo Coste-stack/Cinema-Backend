@@ -49,6 +49,7 @@ services.AddScoped<IRoomService, RoomService>();
 services.AddScoped<ISeatService, SeatService>();
 services.AddScoped<IMovieService, MovieService>();
 services.AddScoped<IBookingService, BookingService>();
+services.AddScoped<IPriceCalculationService, PriceCalculationService>();
 
 services.AddScoped<ILookupService<ProjectionType>, LookupService<ProjectionType>>();
 services.AddScoped<ILookupService<SeatType>, LookupService<SeatType>>();

@@ -29,7 +29,11 @@ public class ScreeningRepository : IScreeningRepository
 
     public List<Screening> GetByRoom(int roomId) => _context.Screenings.Where(s => s.RoomId == roomId).ToList();
 
-    public Screening? GetById(int id) => _context.Screenings.Find(id);
+    public Screening? GetById(int id) => _context.Screenings
+        .Include(s => s.Movie)
+        .Include(s => s.ProjectionType)
+        .Include(s => s.Room)
+        .FirstOrDefault(s => s.Id == id);
 
     public Screening Add(Screening screening)
     {

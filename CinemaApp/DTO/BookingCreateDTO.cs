@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using CinemaApp.Model;
+using CinemaApp.DTO.Ticket;
 
 namespace CinemaApp.DTO;
 

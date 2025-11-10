@@ -1,4 +1,5 @@
 using CinemaApp.DTO;
+using CinemaApp.DTO.Ticket;
 using CinemaApp.Model;
 using CinemaApp.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -16,11 +17,16 @@ public class BookingService : IBookingService
 {
     private readonly IBookingRepository _bookingRepo;
     private readonly ITicketRepository _ticketRepo;
+    private readonly IPriceCalculationService _priceService;
 
-    public BookingService(IBookingRepository bookingRepo, ITicketRepository ticketRepo)
+    public BookingService(
+        IBookingRepository bookingRepo, 
+        ITicketRepository ticketRepo,
+        IPriceCalculationService priceService)
     {
         _bookingRepo = bookingRepo;
         _ticketRepo = ticketRepo;
+        _priceService = priceService;
     }
 
     public List<Booking> GetAll()
@@ -67,17 +73,18 @@ public class BookingService : IBookingService
         // Create tickets and attach booking id
         foreach (TicketCreateDto t in dto.Tickets)
         {
-            decimal totalPrice = moviePrice;
-            decimal seatPrice = _bookingRepo.GetSeatPrice(t.SeatId);
-            decimal personPercentDiscount = _bookingRepo.GetPersonPercentDiscount(t.PersonTypeId);
-            totalPrice += seatPrice;
-            totalPrice *= (100 - personPercentDiscount)/100;
+            // Use the centralized price calculation service
+            decimal totalPrice = _priceService.CalculateTicketPrice(
+                dto.ScreeningId, 
+                t.SeatId, 
+                t.PersonTypeId);
 
             Ticket ticket = new Ticket
             {
                 BookingId = booking.Id,
                 SeatId = t.SeatId,
                 PersonTypeId = t.PersonTypeId,
+                ScreeningId = dto.ScreeningId,
                 TotalPrice = totalPrice
             };
             booking.Tickets.Add(ticket);
