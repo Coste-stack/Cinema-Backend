@@ -35,8 +35,10 @@ services.AddScoped<ICinemaRepository, CinemaRepository>();
 services.AddScoped<IRoomRepository, RoomRepository>();
 services.AddScoped<ISeatRepository, SeatRepository>();
 services.AddScoped<IMovieRepository, MovieRepository>();
+services.AddScoped<IScreeningRepository, ScreeningRepository>();
 services.AddScoped<IBookingRepository, BookingRepository>();
 services.AddScoped<ITicketRepository, TicketRepository>();
+services.AddScoped<IUserRepository, UserRepository>();
 
 services.AddScoped<ILookupRepository<ProjectionType>, LookupRepository<ProjectionType>>();
 services.AddScoped<ILookupRepository<SeatType>, LookupRepository<SeatType>>();
@@ -48,7 +50,9 @@ services.AddScoped<ICinemaService, CinemaService>();
 services.AddScoped<IRoomService, RoomService>();
 services.AddScoped<ISeatService, SeatService>();
 services.AddScoped<IMovieService, MovieService>();
+services.AddScoped<IScreeningService, ScreeningService>();
 services.AddScoped<IBookingService, BookingService>();
+services.AddScoped<IUserService, UserService>();
 services.AddScoped<IPriceCalculationService, PriceCalculationService>();
 
 services.AddScoped<ILookupService<ProjectionType>, LookupService<ProjectionType>>();

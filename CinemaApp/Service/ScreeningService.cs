@@ -1,5 +1,6 @@
 using CinemaApp.Model;
 using CinemaApp.Repository;
+using CinemaApp.DTO;
 
 namespace CinemaApp.Service;
 
@@ -14,6 +15,8 @@ public interface IScreeningService
     void Delete(int id);
     void DeleteByMovie(int movieId);
     void DeleteByRoom(int roomId);
+    List<Seat> GetAvailableSeats(int screeningId);
+    SeatMapResponseDTO GetSeatMapWithAvailability(int screeningId);
 }
 
 public class ScreeningService : IScreeningService
@@ -61,6 +64,70 @@ public class ScreeningService : IScreeningService
             throw new NotFoundException($"Screening with ID {id} not found.");
 
         return screening;
+    }
+
+    public List<Seat> GetAvailableSeats(int screeningId)
+    {
+        var screening = _repository.GetByIdWithBookingsAndRoom(screeningId);
+        if (screening == null)
+            throw new NotFoundException($"Screening with ID {screeningId} not found.");
+
+        // Get all seats in the room
+        var allSeats = screening.Room?.Seats?.ToList() ?? new List<Seat>();
+
+        // Get all booked seat IDs for this screening
+        var bookedSeatIds = screening.Bookings
+            .Where(b => b.BookingStatus != BookingStatus.Cancelled)
+            .SelectMany(b => b.Tickets)
+            .Select(t => t.SeatId)
+            .ToHashSet();
+
+        // Return seats that are not booked
+        return allSeats.Where(s => !bookedSeatIds.Contains(s.Id)).ToList();
+    }
+
+    public SeatMapResponseDTO GetSeatMapWithAvailability(int screeningId)
+    {
+        var screening = _repository.GetByIdWithBookingsAndRoom(screeningId);
+        if (screening == null)
+            throw new NotFoundException($"Screening with ID {screeningId} not found.");
+
+        // Get all seats in the room
+        var allSeats = screening.Room?.Seats?.ToList() ?? new List<Seat>();
+
+        // Get all booked seat IDs for this screening
+        var bookedSeatIds = screening.Bookings
+            .Where(b => b.BookingStatus != BookingStatus.Cancelled)
+            .SelectMany(b => b.Tickets)
+            .Select(t => t.SeatId)
+            .ToHashSet();
+
+        // Group seats by row and create seat map
+        var seatMap = allSeats
+            .GroupBy(s => s.Row)
+            .OrderBy(g => g.Key)
+            .Select(g => new SeatRowDTO
+            {
+                Row = g.Key ?? string.Empty,
+                Seats = g.OrderBy(s => s.Number).Select(s => new SeatInfoDTO
+                {
+                    Id = s.Id,
+                    Number = s.Number,
+                    SeatTypeId = s.SeatTypeId,
+                    SeatTypeName = s.SeatType?.Name,
+                    IsAvailable = !bookedSeatIds.Contains(s.Id)
+                }).ToList()
+            }).ToList();
+
+        return new SeatMapResponseDTO
+        {
+            ScreeningId = screeningId,
+            RoomId = screening.Room?.Id ?? 0,
+            RoomName = screening.Room?.Name ?? string.Empty,
+            TotalSeats = allSeats.Count,
+            AvailableSeats = allSeats.Count - bookedSeatIds.Count,
+            SeatMap = seatMap
+        };
     }
 
     public Screening Add(Screening screening)

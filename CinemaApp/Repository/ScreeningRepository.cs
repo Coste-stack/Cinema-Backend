@@ -11,6 +11,7 @@ public interface IScreeningRepository
     List<Screening> GetByMovie(int movieId);
     List<Screening> GetByRoom(int roomId);
     Screening? GetById(int id);
+    Screening? GetByIdWithBookingsAndRoom(int id);
     Screening Add(Screening screening);
     void Update(Screening screening);
     void Delete(Screening screening);
@@ -33,6 +34,14 @@ public class ScreeningRepository : IScreeningRepository
         .Include(s => s.Movie)
         .Include(s => s.ProjectionType)
         .Include(s => s.Room)
+        .FirstOrDefault(s => s.Id == id);
+
+    public Screening? GetByIdWithBookingsAndRoom(int id) => _context.Screenings
+        .Include(s => s.Room)
+            .ThenInclude(r => r.Seats)
+                .ThenInclude(seat => seat.SeatType)
+        .Include(s => s.Bookings)
+            .ThenInclude(b => b.Tickets)
         .FirstOrDefault(s => s.Id == id);
 
     public Screening Add(Screening screening)

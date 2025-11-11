@@ -1,3 +1,4 @@
+using CinemaApp.DTO;
 using CinemaApp.Model;
 using CinemaApp.Service;
 using Microsoft.AspNetCore.Mvc;
@@ -38,6 +39,20 @@ public class ScreeningController : ControllerBase
     public ActionResult<List<Screening>> GetByRoom(int roomId)
     {
         return _service.GetByRoom(roomId);
+    }
+
+    [HttpGet("{id}/available-seats")]
+    public ActionResult<List<Seat>> GetAvailableSeats(int id)
+    {
+        var seats = _service.GetAvailableSeats(id);
+        return seats;
+    }
+
+    [HttpGet("{id}/seat-map")]
+    public ActionResult<SeatMapResponseDTO> GetSeatMap(int id)
+    {
+        var seatMap = _service.GetSeatMapWithAvailability(id);
+        return seatMap;
     }
 
     [HttpPost]

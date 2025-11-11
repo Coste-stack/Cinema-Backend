@@ -106,18 +106,26 @@ public class AppDbContext : DbContext
             .OnDelete(DeleteBehavior.Restrict)
             .HasConstraintName("FK_Tickets_PersonType");
 
-        // User(One) - Booking(Many)
-        modelBuilder.Entity<User>()
-            .HasMany(u => u.Bookings)
-            .WithOne(b => b.User)
-            .HasForeignKey(b => b.UserId)
-            .OnDelete(DeleteBehavior.Cascade)
-            .HasConstraintName("FK_Bookings_Users");
+        modelBuilder.Entity<User>(entity =>
+        {
+            // User(One) - Booking(Many)
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Bookings)
+                .WithOne(b => b.User)
+                .HasForeignKey(b => b.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_Bookings_Users");
+                
+            // Add unique constraint to user email
+            entity
+                .HasIndex(u => u.Email)
+                .IsUnique();
+        });
 
         // Screening(One) - Booking(Many)
         modelBuilder.Entity<Booking>()
             .HasOne(b => b.Screening)
-            .WithMany()
+            .WithMany(s => s.Bookings)
             .HasForeignKey(b => b.ScreeningId)
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_Bookings_Screenings");
@@ -129,21 +137,6 @@ public class AppDbContext : DbContext
             .Property(s => s.BasePrice).HasPrecision(5, 2);
         modelBuilder.Entity<Ticket>()
             .Property(s => s.TotalPrice).HasPrecision(5, 2);
-        
-        modelBuilder.Entity<User>(entity =>
-        {
-            // User(One) - Booking(Many)
-            entity
-                .HasMany(u => u.Bookings)
-                .WithOne(b => b.User)
-                .HasForeignKey(b => b.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Add unique constraint to user email
-            entity
-                .HasIndex(u => u.Email)
-                .IsUnique();
-        });
         
         // Seed SeatType table
         modelBuilder.Entity<SeatType>(entity =>
