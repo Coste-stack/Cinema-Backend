@@ -1,5 +1,6 @@
 using CinemaApp.Model;
 using CinemaApp.Repository;
+using System.Linq;
 
 namespace CinemaApp.Service;
 
@@ -7,6 +8,14 @@ public interface IMovieService
 {
     List<Movie> GetAll();
     Movie GetById(int id);
+    List<Movie> Search(
+        string? title,
+        List<int>? genreIds,
+        int? minRating,
+        DateTime? releasedAfter,
+        int? cinemaId,
+        bool? currentlyShowing
+    );
     Movie Add(Movie movie);
     void Update(int id, Movie movie);
     void Delete(int id);
@@ -29,6 +38,67 @@ public class MovieService : IMovieService
         if (movie == null)
             throw new NotFoundException($"Movie with ID {id} not found.");
         return movie;
+    }
+
+    public List<Movie> Search(
+        string? title,
+        List<int>? genreIds,
+        int? minRating,
+        DateTime? releasedAfter,
+        int? cinemaId,
+        bool? currentlyShowing
+    ) 
+    {
+        var query = _repository.GetAll().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(title))
+        {
+            var trimmed = title.Trim().ToLower();
+            query = query.Where(m => 
+                (m.Title ?? string.Empty).ToLower().Contains(trimmed)
+            );
+        }
+
+        if (genreIds != null && genreIds.Count > 0)
+        {
+            var ids = genreIds.ToHashSet();
+            query = query.Where(m => 
+                m.Genres != null && m.Genres.Any(g => ids.Contains(g.Id))
+            );
+        }
+
+        if (minRating.HasValue)
+        {
+            query = query.Where(m => 
+                m.Rating.HasValue && (int)m.Rating.Value >= minRating.Value
+            );
+        }
+
+        if (releasedAfter.HasValue)
+        {
+            query = query.Where(m => 
+                m.ReleaseDate.HasValue && m.ReleaseDate.Value > releasedAfter.Value
+            );
+        }
+
+        if (cinemaId.HasValue)
+        {
+            query = query.Where(m => 
+                m.Screenings != null && 
+                m.Screenings.Any(s => s.Room != null && s.Room.CinemaId == cinemaId.Value)
+            );
+        }
+
+        if (currentlyShowing.HasValue && currentlyShowing.Value)
+        {
+            var now = DateTime.Now;
+            query = query.Where(m => 
+                m.Screenings != null && 
+                m.Screenings.Any(s => s.StartTime > now)
+            );
+        }
+
+        return query.ToList();
     }
 
     public Movie Add(Movie movie)

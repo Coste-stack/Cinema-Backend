@@ -22,6 +22,19 @@ public class MovieController(IMovieService service) : ControllerBase
         return _service.GetById(id);
     }
 
+    [HttpGet("search")]
+    public ActionResult<List<Movie>> Search(
+        [FromQuery] string? title,
+        [FromQuery] List<int>? genreIds,
+        [FromQuery] int? minRating,
+        [FromQuery] DateTime? releasedAfter,
+        [FromQuery] int? cinemaId,
+        [FromQuery] bool? currentlyShowing
+    ) {
+        var movies = _service.Search(title, genreIds, minRating, releasedAfter, cinemaId, currentlyShowing);
+        return movies;
+    }
+
     [HttpPost]
     public ActionResult Create([FromBody] Movie movie)
     {

@@ -179,4 +179,132 @@ public class MovieControllerTests
 
         Assert.Throws<NotFoundException>(() => controller.Delete(9999));
     }
+
+    [Fact]
+    public void Search_ReturnsAllMovies_WhenNoFilters()
+    {
+        var controller = CreateControllerWithSeededData();
+
+        var result = controller.Search(null, null, null, null, null, null);
+
+        var movies = Assert.IsType<List<Movie>>(result.Value);
+        Assert.True(movies.Count >= 2);
+    }
+
+    [Fact]
+    public void Search_FiltersByTitle_CaseInsensitive()
+    {
+        var controller = CreateControllerWithSeededData();
+
+        var result = controller.Search("inception", null, null, null, null, null);
+
+        var movies = Assert.IsType<List<Movie>>(result.Value);
+        Assert.Single(movies);
+        Assert.Equal("Inception", movies[0].Title);
+    }
+
+    [Fact]
+    public void Search_FiltersByPartialTitle()
+    {
+        var controller = CreateControllerWithSeededData();
+
+        var result = controller.Search("dark", null, null, null, null, null);
+
+        var movies = Assert.IsType<List<Movie>>(result.Value);
+        Assert.Single(movies);
+        Assert.Contains("Dark", movies[0].Title);
+    }
+
+    [Fact]
+    public void Search_FiltersByGenre()
+    {
+        var controller = CreateControllerWithSeededData();
+
+        // Sci-Fi genre ID 1 from TestDataSeeder (Inception has Sci-Fi)
+        var result = controller.Search(null, new List<int> { 1 }, null, null, null, null);
+
+        var movies = Assert.IsType<List<Movie>>(result.Value);
+        Assert.NotEmpty(movies);
+        Assert.All(movies, m => Assert.Contains(m.Genres, g => g.Id == 1));
+    }
+
+    [Fact]
+    public void Search_FiltersByMultipleGenres()
+    {
+        var controller = CreateControllerWithSeededData();
+
+        // Both movies have Thriller (ID 3) from TestDataSeeder
+        var result = controller.Search(null, new List<int> { 3 }, null, null, null, null);
+
+        var movies = Assert.IsType<List<Movie>>(result.Value);
+        Assert.True(movies.Count >= 2);
+    }
+
+    [Fact]
+    public void Search_FiltersByMinRating()
+    {
+        var controller = CreateControllerWithSeededData();
+
+        // Both seeded movies are PG13 (value 1)
+        var result = controller.Search(null, null, (int)MovieRating.PG13, null, null, null);
+
+        var movies = Assert.IsType<List<Movie>>(result.Value);
+        Assert.NotEmpty(movies);
+        Assert.All(movies, m => Assert.True(m.Rating >= MovieRating.PG13));
+    }
+
+    [Fact]
+    public void Search_FiltersByReleaseDate()
+    {
+        var controller = CreateControllerWithSeededData();
+
+        // Filter for movies after 2009
+        var result = controller.Search(null, null, null, new DateTime(2009, 1, 1), null, null);
+
+        var movies = Assert.IsType<List<Movie>>(result.Value);
+        Assert.NotEmpty(movies);
+        Assert.All(movies, m => Assert.True(m.ReleaseDate > new DateTime(2009, 1, 1)));
+    }
+
+    [Fact]
+    public void Search_CombinesMultipleFilters()
+    {
+        var controller = CreateControllerWithSeededData();
+
+        // Search for Sci-Fi movies (ID 1) released after 2009
+        var result = controller.Search(null, new List<int> { 1 }, null, new DateTime(2009, 1, 1), null, null);
+
+        var movies = Assert.IsType<List<Movie>>(result.Value);
+        Assert.NotEmpty(movies);
+        Assert.All(movies, m => 
+        {
+            Assert.Contains(m.Genres, g => g.Id == 1);
+            Assert.True(m.ReleaseDate > new DateTime(2009, 1, 1));
+        });
+    }
+
+    [Fact]
+    public void Search_ReturnsEmpty_WhenNoMatches()
+    {
+        var controller = CreateControllerWithSeededData();
+
+        var result = controller.Search("NonexistentMovie", null, null, null, null, null);
+
+        var movies = Assert.IsType<List<Movie>>(result.Value);
+        Assert.Empty(movies);
+    }
+
+    [Fact]
+    public void Search_TitleAndGenreCombination()
+    {
+        var controller = CreateControllerWithSeededData();
+
+        // Search for "Inception" with Sci-Fi genre (ID 1)
+        var result = controller.Search("Inception", new List<int> { 1 }, null, null, null, null);
+
+        var movies = Assert.IsType<List<Movie>>(result.Value);
+        Assert.Single(movies);
+        Assert.Equal("Inception", movies[0].Title);
+        Assert.Contains(movies[0].Genres, g => g.Id == 1);
+    }
 }
