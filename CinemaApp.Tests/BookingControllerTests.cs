@@ -340,4 +340,87 @@ public class BookingControllerTests
         Assert.Equal(37.40m, totalPrice);
         Assert.Equal(3, booking.Tickets.Count);
     }
+
+    [Fact]
+    public void ConfirmBooking_ThrowsConflict_WhenBookingExpired()
+    {
+        var controller = CreateControllerWithSeededData(out var context);
+        var screening = context.Screenings.First();
+        var seat = context.Seats.First();
+        var user = context.Users.First();
+
+        var request = new BookingRequestDTO
+        {
+            ScreeningId = screening.Id,
+            UserId = user.Id,
+            Tickets = new List<TicketCreateDto>
+            {
+                new TicketCreateDto { SeatId = seat.Id, PersonTypeId = 1 }
+            }
+        };
+
+        var createResult = controller.InitiateBooking(request);
+        var createdResult = Assert.IsType<CreatedAtActionResult>(createResult);
+        var booking = Assert.IsType<Booking>(createdResult.Value);
+
+        // Simulate expiry by setting BookingTime to 20 minutes ago
+        var existingBooking = context.Bookings.Find(booking.Id);
+        existingBooking!.BookingTime = DateTime.UtcNow.AddMinutes(-20);
+        context.SaveChanges();
+
+        // Attempt to confirm expired booking
+        var exception = Assert.Throws<ConflictException>(() => controller.ConfirmBooking(booking.Id));
+        Assert.Contains("expired", exception.Message.ToLower());
+
+        // Verify booking was cancelled
+        var cancelledBooking = controller.GetById(booking.Id).Value;
+        Assert.Equal(BookingStatus.Cancelled, cancelledBooking!.BookingStatus);
+    }
+
+    [Fact]
+    public void IsSeatTaken_ReturnsFalse_WhenOnlyExpiredPendingBookingExists()
+    {
+        var controller = CreateControllerWithSeededData(out var context);
+        var screening = context.Screenings.First();
+        var seat = context.Seats.First();
+        var user = context.Users.First();
+
+        // Create a pending booking
+        var request1 = new BookingRequestDTO
+        {
+            ScreeningId = screening.Id,
+            UserId = user.Id,
+            Tickets = new List<TicketCreateDto>
+            {
+                new TicketCreateDto { SeatId = seat.Id, PersonTypeId = 1 }
+            }
+        };
+
+        var createResult = controller.InitiateBooking(request1);
+        var createdResult = Assert.IsType<CreatedAtActionResult>(createResult);
+        var booking = Assert.IsType<Booking>(createdResult.Value);
+
+        // Simulate expiry by setting BookingTime to 20 minutes ago
+        var existingBooking = context.Bookings.Find(booking.Id);
+        existingBooking!.BookingTime = DateTime.UtcNow.AddMinutes(-20);
+        context.SaveChanges();
+
+        // Now try to create another booking for the same seat - should succeed
+        var request2 = new BookingRequestDTO
+        {
+            ScreeningId = screening.Id,
+            UserId = user.Id,
+            Tickets = new List<TicketCreateDto>
+            {
+                new TicketCreateDto { SeatId = seat.Id, PersonTypeId = 1 }
+            }
+        };
+
+        var result2 = controller.InitiateBooking(request2);
+
+        // Should succeed because the first booking expired
+        var createdResult2 = Assert.IsType<CreatedAtActionResult>(result2);
+        var booking2 = Assert.IsType<Booking>(createdResult2.Value);
+        Assert.NotEqual(booking.Id, booking2.Id);
+    }
 }

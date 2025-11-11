@@ -62,6 +62,9 @@ services.AddScoped<ILookupService<Genre>, LookupService<Genre>>();
 
 services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
+// Register background services
+services.AddHostedService<BookingExpiryBackgroundService>();
+
 var app = builder.Build();
 
 // --- Configure the HTTP request pipeline.

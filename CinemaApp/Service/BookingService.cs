@@ -1,3 +1,4 @@
+using CinemaApp.Configuration;
 using CinemaApp.DTO;
 using CinemaApp.DTO.Ticket;
 using CinemaApp.Model;
@@ -31,6 +32,12 @@ public class BookingService : IBookingService
         _bookingRepo = bookingRepo;
         _ticketRepo = ticketRepo;
         _priceService = priceService;
+    }
+
+    private static bool IsBookingExpired(Booking booking)
+    {
+        return booking.BookingStatus == BookingStatus.Pending &&
+               booking.BookingTime.Add(BookingConfiguration.PendingBookingHoldDuration) < DateTime.UtcNow;
     }
 
     public List<Booking> GetAll()
@@ -117,7 +124,7 @@ public class BookingService : IBookingService
         Booking booking = new Booking
         {
             ScreeningId = request.ScreeningId,
-            BookingTime = request.BookingTime,
+            BookingTime = DateTime.UtcNow,
             BookingStatus = BookingStatus.Pending,
             UserId = request.UserId ?? 0
         };
@@ -151,6 +158,14 @@ public class BookingService : IBookingService
 
         if (existing.BookingStatus == BookingStatus.Confirmed)
             return;
+
+        // Check if the pending booking has expired
+        if (IsBookingExpired(existing))
+        {
+            existing.BookingStatus = BookingStatus.Cancelled;
+            _bookingRepo.Update(existing);
+            throw new ConflictException($"Booking {id} has expired and cannot be confirmed.");
+        }
 
         existing.BookingStatus = BookingStatus.Confirmed;
         _bookingRepo.Update(existing);
