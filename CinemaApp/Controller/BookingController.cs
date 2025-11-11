@@ -25,13 +25,34 @@ namespace CinemaApp.Controller
             return _service.GetById(id);
         }
 
-        [HttpPost]
-        public ActionResult Create([FromBody] BookingCreateDto dto)
+        [HttpPost("initiate")]
+        public IActionResult InitiateBooking([FromBody] BookingRequestDTO request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var created = _service.Create(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            var booking = _service.InitiateBooking(request);
+            return CreatedAtAction(nameof(GetById), new { id = booking.Id }, booking);
+        }
+
+        [HttpPost("{id:int}/confirm")]
+        public IActionResult ConfirmBooking(int id)
+        {
+            _service.ConfirmBooking(id);
+            return NoContent();
+        }
+
+        [HttpPost("{id:int}/cancel")]
+        public IActionResult CancelBooking(int id)
+        {
+            _service.CancelBooking(id);
+            return NoContent();
+        }
+
+        [HttpGet("my-bookings")]
+        public IActionResult GetMyBookings([FromQuery] int userId)
+        {
+            var bookings = _service.GetUserBookings(userId);
+            return Ok(bookings);
         }
     }
 }

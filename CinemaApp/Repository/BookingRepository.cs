@@ -9,7 +9,10 @@ public interface IBookingRepository
 {
     List<Booking> GetAll();
     Booking? GetById(int id);
+    List<Booking> GetByUserId(int userId);
     Booking Add(Booking booking);
+    Booking Update(Booking booking);
+    
     decimal GetMoviePrice(Booking booking);
     decimal GetSeatPrice(int seatId);
     decimal GetPersonPercentDiscount(int personTypeId);
@@ -39,6 +42,17 @@ public class BookingRepository : IBookingRepository
             .FirstOrDefault(b => b.Id == id);
     }
 
+    public List<Booking> GetByUserId(int userId)
+    {
+        return _context.Bookings
+            .Include(b => b.Tickets)
+                .ThenInclude(t => t.Seat)
+            .Include(b => b.Tickets)
+                .ThenInclude(t => t.PersonType)
+            .Where(b => b.UserId == userId)
+            .ToList();
+    }
+
     public Booking Add(Booking booking)
     {
         _context.Bookings.Add(booking);
@@ -56,6 +70,22 @@ public class BookingRepository : IBookingRepository
         catch (Exception ex)
         {
             throw new Exception("Unexpected error when adding a booking.", ex);
+        }
+    }
+
+    public Booking Update(Booking booking)
+    {
+        _context.Bookings.Update(booking);
+        try
+        {
+            var affected = _context.SaveChanges();
+            if (affected == 0)
+                throw new ConflictException("No rows affected when updating a booking.");
+            return booking;
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new ConflictException("Database update failed when updating a booking.", ex);
         }
     }
 

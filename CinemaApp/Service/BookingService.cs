@@ -11,6 +11,10 @@ public interface IBookingService
     List<Booking> GetAll();
     Booking GetById(int id);
     Booking Create(BookingCreateDto dto);
+    Booking InitiateBooking(BookingRequestDTO request);
+    void ConfirmBooking(int id);
+    void CancelBooking(int id);
+    List<Booking> GetUserBookings(int userId);
 }
 
 public class BookingService : IBookingService
@@ -68,8 +72,6 @@ public class BookingService : IBookingService
             BookingStatus = BookingStatus.Confirmed
         };
 
-        var moviePrice = _bookingRepo.GetMoviePrice(booking);
-
         // Create tickets and attach booking id
         foreach (TicketCreateDto t in dto.Tickets)
         {
@@ -91,5 +93,84 @@ public class BookingService : IBookingService
         }
 
         return _bookingRepo.Add(booking);
+    }
+
+    public Booking InitiateBooking(BookingRequestDTO request)
+    {
+        if (request == null)
+            throw new BadRequestException("Booking data is required.");
+
+        if (request.Tickets == null || request.Tickets.Count == 0)
+            throw new BadRequestException("At least one ticket is required.");
+
+        // Validate seats and availability for the screening
+        foreach (TicketCreateDto t in request.Tickets)
+        {
+            if (!_ticketRepo.SeatExists(t.SeatId))
+                throw new BadRequestException($"Seat {t.SeatId} does not exist.");
+
+            if (_ticketRepo.IsSeatTaken(t.SeatId, request.ScreeningId))
+                throw new ConflictException($"Seat {t.SeatId} is already taken for screening {request.ScreeningId}.");
+        }
+
+        // Build booking with Pending status to reserve seats
+        Booking booking = new Booking
+        {
+            ScreeningId = request.ScreeningId,
+            BookingTime = request.BookingTime,
+            BookingStatus = BookingStatus.Pending,
+            UserId = request.UserId ?? 0
+        };
+
+        foreach (TicketCreateDto t in request.Tickets)
+        {
+            decimal totalPrice = _priceService.CalculateTicketPrice(
+                request.ScreeningId,
+                t.SeatId,
+                t.PersonTypeId);
+
+            Ticket ticket = new Ticket
+            {
+                BookingId = booking.Id,
+                SeatId = t.SeatId,
+                PersonTypeId = t.PersonTypeId,
+                ScreeningId = request.ScreeningId,
+                TotalPrice = totalPrice
+            };
+            booking.Tickets.Add(ticket);
+        }
+
+        return _bookingRepo.Add(booking);
+    }
+
+    public void ConfirmBooking(int id)
+    {
+        var existing = _bookingRepo.GetById(id);
+        if (existing == null)
+            throw new NotFoundException($"Booking with ID {id} not found.");
+
+        if (existing.BookingStatus == BookingStatus.Confirmed)
+            return;
+
+        existing.BookingStatus = BookingStatus.Confirmed;
+        _bookingRepo.Update(existing);
+    }
+
+    public void CancelBooking(int id)
+    {
+        var existing = _bookingRepo.GetById(id);
+        if (existing == null)
+            throw new NotFoundException($"Booking with ID {id} not found.");
+
+        if (existing.BookingStatus == BookingStatus.Cancelled)
+            return;
+
+        existing.BookingStatus = BookingStatus.Cancelled;
+        _bookingRepo.Update(existing);
+    }
+
+    public List<Booking> GetUserBookings(int userId)
+    {
+        return _bookingRepo.GetByUserId(userId);
     }
 }
