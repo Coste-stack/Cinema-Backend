@@ -67,6 +67,27 @@ services.AddHostedService<BookingExpiryBackgroundService>();
 
 var app = builder.Build();
 
+// Seed database if --seed argument is passed (Development only)
+if (args.Contains("--seed") && app.Environment.IsDevelopment())
+{
+    Console.WriteLine("--- Database Seeding ---");
+    
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        
+        // Run migrations
+        await context.Database.MigrateAsync();
+        
+        // Seed data
+        await SeedData.InitializeAsync(context, logger);
+    }
+    
+    Console.WriteLine("--- Seeding Completed ---");
+    return; // Exit without starting the web server
+}
+
 // --- Configure the HTTP request pipeline.
 
 if (app.Environment.IsDevelopment())

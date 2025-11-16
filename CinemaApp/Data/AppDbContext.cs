@@ -138,62 +138,23 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Ticket>()
             .Property(s => s.TotalPrice).HasPrecision(5, 2);
         
-        // Seed SeatType table
-        modelBuilder.Entity<SeatType>(entity =>
-        {
-            entity.Property(s => s.PriceAmountDiscount)
+        // SeatType table
+        modelBuilder.Entity<SeatType>()
+            .Property(s => s.PriceAmountDiscount)
                 .HasPrecision(5,2)
                 .HasDefaultValue(0m);
 
-            entity.HasData(
-                new SeatType { Id = 1, Name = "Regular", PriceAmountDiscount = 0 },
-                new SeatType { Id = 2, Name = "VIP", PriceAmountDiscount = 10 }
-            );
-        });
-
-        // Seed ProjectionType table
-        modelBuilder.Entity<ProjectionType>(entity =>
-        {
-            entity.Property(p => p.PriceAmountDiscount)
+        // ProjectionType table
+        modelBuilder.Entity<ProjectionType>()
+            .Property(p => p.PriceAmountDiscount)
                 .HasPrecision(5,2)
                 .HasDefaultValue(0m);
 
-            entity.HasData(
-                new ProjectionType { Id = 1, Name = "2D", PriceAmountDiscount = 0 },
-                new ProjectionType { Id = 2, Name = "3D", PriceAmountDiscount = 10 }
-            );
-        });
-
-        // Seed PersonType table
-        modelBuilder.Entity<PersonType>(entity =>
-        {
-            entity.Property(p => p.PricePercentDiscount)
+        // PersonType table
+        modelBuilder.Entity<PersonType>()
+            .Property(p => p.PricePercentDiscount)
                 .HasPrecision(5,2)
                 .HasDefaultValue(0m);
-                
-            entity.HasData(
-                new PersonType { Id = 1, Name = "Adult", PricePercentDiscount = 0 },
-                new PersonType { Id = 2, Name = "Child", PricePercentDiscount = 30 },
-                new PersonType { Id = 3, Name = "Student", PricePercentDiscount = 20 }
-            );
-        });
-
-        // Seed Genre table
-        modelBuilder.Entity<Genre>(entity =>
-        {
-            entity.HasData(
-                new Genre { Id = 1, Name = "Action" },
-                new Genre { Id = 2, Name = "Comedy" },
-                new Genre { Id = 3, Name = "Drama" },
-                new Genre { Id = 4, Name = "Horror" },
-                new Genre { Id = 5, Name = "Science Fiction" },
-                new Genre { Id = 6, Name = "Thriller" },
-                new Genre { Id = 7, Name = "Romance" },
-                new Genre { Id = 8, Name = "Adventure" },
-                new Genre { Id = 9, Name = "Animation" },
-                new Genre { Id = 10, Name = "Documentary" }
-            );
-        });
 
         base.OnModelCreating(modelBuilder);
     }
