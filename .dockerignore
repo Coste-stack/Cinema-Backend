@@ -1,0 +1,20 @@
+# Ignore build artifacts
+**/bin/
+**/obj/
+
+# IDE/editor configs
+**/.vscode/
+**/.vs/
+**/.idea/
+
+# Docker / Compose local files
+docker-compose*
+compose.yaml
+
+# OS files
+**/.DS_Store
+
+# Secrets or env files
+**/.env
+**/secrets.dev.yaml
+**/values.dev.yaml

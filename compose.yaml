@@ -1,0 +1,39 @@
+services:
+  server:
+    container_name: cinemaapp_server
+    build: .
+    image: cinemaapp-server:1.0.0
+    ports:
+      - 8080:8080
+    environment:
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__default=Host=db;Database=CinemaAppDb;Username=postgres;Password_FILE=/run/secrets/db-password
+    depends_on:
+        db:
+          condition: service_healthy
+          restart: true
+    volumes:
+      - ./db/password.txt:/run/secrets/db-password:ro
+
+  db:
+    image: postgres:17
+    container_name: postgres_db
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=CinemaAppDb
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/password.txt:/run/secrets/db-password:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+volumes:
+  postgres-data:

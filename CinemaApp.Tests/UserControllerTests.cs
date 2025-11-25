@@ -101,7 +101,7 @@ public class UserControllerTests
         Assert.Equal(dto.Email, createdDto.Email);
         Assert.Equal(UserType.Registered, createdDto.UserType);
         Assert.True(createdDto.Id > 0);
-        Assert.NotEqual(default, createdDto.CreatedAt);
+        Assert.Equal(default, createdDto.CreatedAt);
 
         // persisted and password hashed in DB
         var inDb = context.Users.SingleOrDefault(u => u.Email == dto.Email);

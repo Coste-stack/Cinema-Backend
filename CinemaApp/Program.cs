@@ -25,9 +25,37 @@ services.AddCors(options =>
     });
 });
 
-// Configure DbContext with Oracle connection string from appsettings.json
+// Configure DbContext with Postgresql
+var isDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+
+if (isDocker)
+{
+    // Docker secrets path
+    var passwordPath = "/run/secrets/db-password";
+    if (!File.Exists(passwordPath))
+        throw new Exception("Secret file not found in container: /run/secrets/db-password (make sure the secret is attached to the server service)");
+
+    string? password = File.Exists(passwordPath)
+        ? File.ReadAllText(passwordPath).Trim()
+        : null;
+    if (string.IsNullOrWhiteSpace(password))
+        throw new Exception("Secret file is empty: /run/secrets/db-password");
+
+    var dockerConn =
+        $"Host=db;Port=5432;Database=CinemaAppDb;Username=postgres;Password={password}";
+
+    builder.Configuration["ConnectionStrings:PostgresDb"] = dockerConn;
+}
+
+// // Register DbContext
+var connectionString = builder.Configuration.GetConnectionString("PostgresDb");
 services.AddDbContext<AppDbContext>(options =>
-    options.UseOracle(builder.Configuration.GetConnectionString("OracleDb")));
+    options.UseNpgsql(connectionString)
+);
+
+// var connectionString = builder.Configuration.GetConnectionString("default");
+// services.AddDbContext<AppDbContext>(options =>
+//     options.UseNpgsql(connectionString));
 
 services.AddControllers()
     .AddJsonOptions(options =>
@@ -78,26 +106,16 @@ services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 services.AddHostedService<BookingExpiryBackgroundService>();
 
 var app = builder.Build();
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
-// Seed database if --seed argument is passed (Development only)
-if (args.Contains("--seed") && app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    Console.WriteLine("--- Database Seeding ---");
-    
-    using (var scope = app.Services.CreateScope())
-    {
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        
-        // Run migrations
-        await context.Database.MigrateAsync();
-        
-        // Seed data
-        await SeedData.InitializeAsync(context, logger);
-    }
-    
-    Console.WriteLine("--- Seeding Completed ---");
-    return; // Exit without starting the web server
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    db.Database.EnsureCreated(); // creates DB & tables if they don't exist
+    await SeedData.InitializeAsync(context, logger);
 }
 
 // --- Configure the HTTP request pipeline.
@@ -105,9 +123,11 @@ if (args.Contains("--seed") && app.Environment.IsDevelopment())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+} else
+{
+    app.UseHttpsRedirection();
 }
 
-app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseExceptionHandler();
 app.MapControllers();

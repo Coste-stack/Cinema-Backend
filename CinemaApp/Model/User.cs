@@ -17,7 +17,6 @@ public class User : EntityBase
 
     public User()
     {
-        CreatedAt = DateTime.UtcNow;
         UserType = UserType.Guest;
     }
 }
