@@ -79,6 +79,7 @@ services.AddScoped<IScreeningRepository, ScreeningRepository>();
 services.AddScoped<IBookingRepository, BookingRepository>();
 services.AddScoped<ITicketRepository, TicketRepository>();
 services.AddScoped<IUserRepository, UserRepository>();
+services.AddScoped<IStatisticsRepository, StatisticsRepository>();
 
 services.AddScoped<ILookupRepository<ProjectionType>, LookupRepository<ProjectionType>>();
 services.AddScoped<ILookupRepository<SeatType>, LookupRepository<SeatType>>();
@@ -94,6 +95,7 @@ services.AddScoped<IScreeningService, ScreeningService>();
 services.AddScoped<IBookingService, BookingService>();
 services.AddScoped<IUserService, UserService>();
 services.AddScoped<IPriceCalculationService, PriceCalculationService>();
+services.AddScoped<IStatisticsService, StatisticsService>();
 
 services.AddScoped<ILookupService<ProjectionType>, LookupService<ProjectionType>>();
 services.AddScoped<ILookupService<SeatType>, LookupService<SeatType>>();

@@ -97,6 +97,9 @@ public static class SeedData
         
         // Seed Screenings
         await SeedScreeningsAsync(context, movies, rooms, logger);
+        
+        // Seed Bookings and Tickets so statistics have real data
+        await SeedBookingsAndTicketsAsync(context, logger);
     }
 
     private static async Task<List<Cinema>> SeedCinemasAsync(AppDbContext context, ILogger logger)
@@ -387,5 +390,121 @@ public static class SeedData
         context.Screenings.AddRange(screenings);
         await context.SaveChangesAsync();
         logger.LogInformation($"Seeded {screenings.Count} screenings.");
+    }
+
+    public static async Task SeedBookingsAndTicketsAsync(AppDbContext context, ILogger logger)
+    {
+        var screenings = await context.Screenings.Include(s => s.Room).ToListAsync();
+        if (screenings.Count == 0)
+        {
+            logger.LogWarning("No screenings available to seed bookings/tickets.");
+            return;
+        }
+
+        var personType = await context.PersonTypes.OrderBy(pt => pt.Id).FirstOrDefaultAsync();
+        if (personType == null)
+        {
+            logger.LogWarning("No PersonTypes found; cannot seed tickets without a person type.");
+            return;
+        }
+
+        var rnd = new Random(1234);
+        // Mark seats already used by existing tickets to avoid duplicates
+        var existingUsedSeatIds = await context.Tickets.Select(t => t.SeatId).ToListAsync();
+        var globallyUsedSeatIds = new HashSet<int>(existingUsedSeatIds);
+
+        // Create tickets for existing bookings
+        var bookingsWithoutTickets = await context.Bookings
+            .Where(b => !context.Tickets.Any(t => t.BookingId == b.Id))
+            .ToListAsync();
+
+        foreach (var booking in bookingsWithoutTickets)
+        {
+            var screening = await context.Screenings.FindAsync(booking.ScreeningId);
+            if (screening == null) continue;
+            var seats = await context.Seats.Where(se => se.RoomId == screening.RoomId).ToListAsync();
+            var candidateSeatIds = seats.Select(se => se.Id).Where(id => !globallyUsedSeatIds.Contains(id)).ToList();
+            if (candidateSeatIds.Count == 0) continue;
+            var seatId = candidateSeatIds.OrderBy(_ => rnd.Next()).First();
+
+                var ticket = new Ticket
+                {
+                    BookingId = booking.Id,
+                    SeatId = seatId,
+                    ScreeningId = booking.ScreeningId,
+                    TotalPrice = screening.BasePrice,
+                    PersonTypeId = personType.Id
+                };
+            context.Tickets.Add(ticket);
+            globallyUsedSeatIds.Add(seatId);
+        }
+        await context.SaveChangesAsync();
+
+        // Ensure there's at least one user to attach bookings to
+        var seedUser = await context.Users.OrderBy(u => u.Id).FirstOrDefaultAsync();
+        if (seedUser == null)
+        {
+            seedUser = new User
+            {
+                Email = "seed@local",
+                CreatedAt = DateTime.UtcNow,
+                UserType = UserType.Guest
+            };
+            context.Users.Add(seedUser);
+            await context.SaveChangesAsync();
+            logger.LogInformation($"Seeded user {seedUser.Email} (Id={seedUser.Id}).");
+        }
+
+        // seed bookings for a subset of screenings
+        var sampleScreenings = screenings.OrderBy(s => rnd.Next()).Take(Math.Min(50, screenings.Count)).ToList();
+        foreach (var s in sampleScreenings)
+        {
+            // get seats in room
+            var seats = await context.Seats.Where(se => se.RoomId == s.RoomId).ToListAsync();
+            if (seats.Count == 0) continue;
+
+            // decide how many tickets (up to 30% of capacity)
+            var capacity = seats.Count;
+            var ticketsCount = Math.Max(1, rnd.Next(1, Math.Max(2, (int)(capacity * 0.3))));
+
+            var booking = new Booking {
+                BookingTime = DateTime.UtcNow,
+                ScreeningId = s.Id,
+                BookingStatus = BookingStatus.Confirmed,
+                UserId = seedUser.Id
+            };
+
+            // add and save booking to obtain Id for tickets
+            context.Bookings.Add(booking);
+            await context.SaveChangesAsync();
+
+            // pick random seats (unique) excluding seats already used across seeded tickets
+            var candidateSeatIds = seats
+                .Select(se => se.Id)
+                .Where(id => !globallyUsedSeatIds.Contains(id))
+                .ToList();
+            if (!candidateSeatIds.Any()) continue;
+
+            var availableSeatIds = candidateSeatIds.OrderBy(_ => rnd.Next()).Take(ticketsCount).ToList();
+            var bookingTickets = new List<Ticket>();
+            foreach (var seatId in availableSeatIds)
+            {
+                var ticket = new Ticket {
+                    BookingId = booking.Id,
+                    SeatId = seatId,
+                    ScreeningId = s.Id,
+                    TotalPrice = s.BasePrice,
+                    PersonTypeId = personType.Id
+                };
+                bookingTickets.Add(ticket);
+                globallyUsedSeatIds.Add(seatId);
+            }
+
+            if (bookingTickets.Count != 0)
+            {
+                context.Tickets.AddRange(bookingTickets);
+                await context.SaveChangesAsync();
+            }
+        }
     }
 }
