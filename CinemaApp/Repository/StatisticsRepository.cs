@@ -9,7 +9,7 @@ namespace CinemaApp.Repository;
 public interface IStatisticsRepository
 {
     List<PopularMovieDTO> GetPopularMovies(int top);
-    List<LatestMovieDTO> GetLatestMovies(int days);
+    List<MovieDto> GetLatestMovies(int days);
 }
 
 public class StatisticsRepository : IStatisticsRepository
@@ -50,21 +50,18 @@ public class StatisticsRepository : IStatisticsRepository
         return q;
     } 
 
-    public List<LatestMovieDTO> GetLatestMovies(int days)
+    public List<MovieDto> GetLatestMovies(int days)
     {
         var since = DateTime.UtcNow.Date.AddDays(-days);
         var q = _context.Movies
             .Where(m => m.ReleaseDate != null && m.ReleaseDate >= since)
             .OrderByDescending(m => m.ReleaseDate)
-            .Select(m => new LatestMovieDTO {
-                Movie = new MovieDto {
-                    Id = m.Id,
-                    Title = m.Title ?? string.Empty,
-                    Description = m.Description,
-                    Duration = m.Duration,
-                    Rating = m.Rating,
-                    ReleaseDate = m.ReleaseDate
-                },
+            .Select(m => new MovieDto {
+                Id = m.Id,
+                Title = m.Title ?? string.Empty,
+                Description = m.Description,
+                Duration = m.Duration,
+                Rating = m.Rating,
                 ReleaseDate = m.ReleaseDate
             })
             .ToList();

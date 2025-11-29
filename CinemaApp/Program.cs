@@ -30,20 +30,25 @@ var isDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER")
 
 if (isDocker)
 {
-    // Docker secrets path
+    // Docker secrets path or fallback to env var
     var passwordPath = "/run/secrets/db-password";
-    if (!File.Exists(passwordPath))
-        throw new Exception("Secret file not found in container: /run/secrets/db-password (make sure the secret is attached to the server service)");
+    string? password = null;
 
-    string? password = File.Exists(passwordPath)
-        ? File.ReadAllText(passwordPath).Trim()
-        : null;
+    if (File.Exists(passwordPath))
+    {
+        password = File.ReadAllText(passwordPath).Trim();
+    }
+    else
+    {
+        // Common environment variables used in docker-compose/Postgres setups
+        password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD")
+                   ?? Environment.GetEnvironmentVariable("DB_PASSWORD");
+    }
+
     if (string.IsNullOrWhiteSpace(password))
-        throw new Exception("Secret file is empty: /run/secrets/db-password");
+        throw new Exception("Database password not provided. Mount secret to '/run/secrets/db-password' or set 'POSTGRES_PASSWORD' or 'DB_PASSWORD' environment variable.");
 
-    var dockerConn =
-        $"Host=db;Port=5432;Database=CinemaAppDb;Username=postgres;Password={password}";
-
+    var dockerConn = $"Host=db;Port=5432;Database=CinemaAppDb;Username=postgres;Password={password}";
     builder.Configuration["ConnectionStrings:PostgresDb"] = dockerConn;
 }
 
@@ -125,9 +130,15 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-} else
+}
+else
 {
-    app.UseHttpsRedirection();
+    // var httpsPort = Environment.GetEnvironmentVariable("ASPNETCORE_HTTPS_PORT");
+    // var aspnetcoreUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? string.Empty;
+    // if (!string.IsNullOrWhiteSpace(httpsPort) || aspnetcoreUrls.IndexOf("https://", System.StringComparison.OrdinalIgnoreCase) >= 0)
+    // {
+    //     app.UseHttpsRedirection();
+    // }
 }
 
 app.UseCors("AllowFrontend");

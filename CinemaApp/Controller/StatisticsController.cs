@@ -18,7 +18,7 @@ namespace CinemaApp.Controller;
     }
 
     [HttpGet("latest-movies")]
-    public ActionResult<List<LatestMovieDTO>> GetLatestMovies([FromQuery] int days = 365)
+    public ActionResult<List<MovieDto>> GetLatestMovies([FromQuery] int days = 365)
     {
         return _service.GetLatestMovies(days);
     }

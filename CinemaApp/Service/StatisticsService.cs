@@ -6,7 +6,7 @@ namespace CinemaApp.Service;
 public interface IStatisticsService
 {
     List<PopularMovieDTO> GetPopularMovies(int top);
-    List<LatestMovieDTO> GetLatestMovies(int days);
+    List<MovieDto> GetLatestMovies(int days);
 }
 
 public class StatisticsService : IStatisticsService
@@ -20,7 +20,7 @@ public class StatisticsService : IStatisticsService
         return _repository.GetPopularMovies(top);
     }
 
-    public List<LatestMovieDTO> GetLatestMovies(int days)
+    public List<MovieDto> GetLatestMovies(int days)
     {
         return _repository.GetLatestMovies(days);
     }
