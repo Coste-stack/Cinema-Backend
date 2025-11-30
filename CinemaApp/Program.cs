@@ -133,12 +133,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    // var httpsPort = Environment.GetEnvironmentVariable("ASPNETCORE_HTTPS_PORT");
-    // var aspnetcoreUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? string.Empty;
-    // if (!string.IsNullOrWhiteSpace(httpsPort) || aspnetcoreUrls.IndexOf("https://", System.StringComparison.OrdinalIgnoreCase) >= 0)
-    // {
-    //     app.UseHttpsRedirection();
-    // }
+    app.UseHttpsRedirection();
 }
 
 app.UseCors("AllowFrontend");

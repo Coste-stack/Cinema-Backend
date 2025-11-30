@@ -7,7 +7,9 @@ services:
       - 8080:8080
     environment:
       - DOTNET_RUNNING_IN_CONTAINER=true
-      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_URLS=https://+:8080
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certificate.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password_FILE=/run/secrets/pfx_password
       - ConnectionStrings__default=Host=db;Database=CinemaAppDb;Username=postgres;Password_FILE=/run/secrets/db-password
     depends_on:
         db:
@@ -15,6 +17,9 @@ services:
           restart: true
     volumes:
       - ./db/password.txt:/run/secrets/db-password:ro
+      - ./certs/certificate.pfx:/app/certificate.pfx:ro
+    secrets:
+      - pfx_password
 
   db:
     image: postgres:17
@@ -37,3 +42,7 @@ services:
 
 volumes:
   postgres-data:
+
+secrets:
+  pfx_password:
+    file: ./secrets/pfx-password.txt

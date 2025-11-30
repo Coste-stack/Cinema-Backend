@@ -6,5 +6,6 @@ obj/
 *.code-workspace
 
 appsettings.json
-db/password.txt
+*password.txt
+*.pfx
 .env
