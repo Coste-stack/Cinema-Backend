@@ -4,6 +4,9 @@ using CinemaApp.Repository;
 using CinemaApp.Service;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -108,6 +111,36 @@ services.AddScoped<ILookupService<PersonType>, LookupService<PersonType>>();
 services.AddScoped<ILookupService<Genre>, LookupService<Genre>>();
 
 services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+services.AddScoped<ITokenService, TokenService>();
+
+// Configure JWT authentication
+var jwtSection = builder.Configuration.GetSection("Jwt");
+var jwtSecret = jwtSection["Secret"] ?? throw new Exception("JWT secret not configured.");
+var jwtIssuer = jwtSection["Issuer"] ?? "CinemaApp";
+var jwtAudience = jwtSection["Audience"] ?? "CinemaAppClients";
+var key = Encoding.UTF8.GetBytes(jwtSecret);
+
+services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = true,
+            ValidIssuer = jwtIssuer,
+            ValidateAudience = true,
+            ValidAudience = jwtAudience,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+services.AddAuthorization();
 
 // Register background services
 services.AddHostedService<BookingExpiryBackgroundService>();
@@ -138,5 +171,7 @@ else
 
 app.UseCors("AllowFrontend");
 app.UseExceptionHandler();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.Run();

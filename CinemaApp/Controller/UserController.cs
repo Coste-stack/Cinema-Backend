@@ -34,16 +34,6 @@ public class UserController(IUserService service) : ControllerBase
         return user.ToResponse();
     }
 
-    [HttpPost("register")]
-    public ActionResult Register([FromBody] UserCreateDTO dto)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-
-        var user = _service.Add(dto);
-        var response = user.ToResponse();
-        return CreatedAtAction(nameof(GetById), new { id = user.Id }, response);
-    }
-
     [HttpPut("{id:int}")]
     public ActionResult Update(int id, [FromBody] UserCreateDTO dto)
     {

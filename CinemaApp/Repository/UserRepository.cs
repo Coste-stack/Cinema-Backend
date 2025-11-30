@@ -30,7 +30,7 @@ public class UserRepository : IUserRepository
     {
         var lowered = email.ToLowerInvariant();
         return _context.Users
-            .SingleOrDefault(u => u.Email.Equals(lowered, StringComparison.InvariantCultureIgnoreCase));
+            .SingleOrDefault(u => u.Email.ToLower() == lowered);
     }
 
     public User Add(User user)
@@ -76,6 +76,6 @@ public class UserRepository : IUserRepository
     {
         var lowered = email.ToLowerInvariant();
         return _context.Users
-            .Any(u => u.Email.Equals(lowered, StringComparison.InvariantCultureIgnoreCase));
+            .Any(u => u.Email.ToLower() == lowered);
     }
 }
