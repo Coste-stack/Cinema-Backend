@@ -41,7 +41,7 @@ public class AuthControllerTests
         var action = controller.Login(request);
 
         var ok = Assert.IsType<OkObjectResult>(action.Result);
-        var dto = Assert.IsType<LoginResponseDTO>(ok.Value);
+        var dto = Assert.IsType<AuthResponseDTO>(ok.Value);
         Assert.Equal(TestTokenService.TokenValue, dto.Token);
     }
 
@@ -77,7 +77,7 @@ public class AuthControllerTests
         var action = controller.Register(dto);
 
         var created = Assert.IsType<CreatedAtActionResult>(action.Result);
-        var resp = Assert.IsType<LoginResponseDTO>(created.Value);
+        var resp = Assert.IsType<AuthResponseDTO>(created.Value);
         Assert.Equal(TestTokenService.TokenValue, resp.Token);
 
         // user persisted

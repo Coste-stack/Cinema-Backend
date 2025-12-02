@@ -15,8 +15,10 @@ public class AuthController(IUserService userService, IPasswordHasher<User> pass
     private readonly ITokenService _tokenService = tokenService;
     private readonly IConfiguration _config = config;
 
+    
+
     [HttpPost("login")]
-    public ActionResult<LoginResponseDTO> Login([FromBody] LoginRequestDTO request)
+    public ActionResult<AuthResponseDTO> Login([FromBody] LoginRequestDTO request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -31,12 +33,8 @@ public class AuthController(IUserService userService, IPasswordHasher<User> pass
         var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
         if (result == PasswordVerificationResult.Success || result == PasswordVerificationResult.SuccessRehashNeeded)
         {
-            var token = _tokenService.GenerateToken(user);
-            var jwtSection = _config.GetSection("Jwt");
-            var expiryMinutesString = jwtSection["ExpiryMinutes"] ?? "60";
-            if (!int.TryParse(expiryMinutesString, out var expiryMinutes)) expiryMinutes = 60;
-
-            var response = new LoginResponseDTO { Token = token, ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes) };
+            AuthTokenDTO tokenDTO = _tokenService.GenerateToken(user);
+            var response = new AuthResponseDTO { Token = tokenDTO.Token, ExpiresAt = tokenDTO.ExpiresAt };
             return Ok(response);
         }
 
@@ -44,18 +42,14 @@ public class AuthController(IUserService userService, IPasswordHasher<User> pass
     }
 
     [HttpPost("register")]
-    public ActionResult<LoginResponseDTO> Register([FromBody] UserCreateDTO dto)
+    public ActionResult<AuthResponseDTO> Register([FromBody] UserCreateDTO dto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
         var user = _userService.Add(dto);
 
-        var token = _tokenService.GenerateToken(user);
-        var jwtSection = _config.GetSection("Jwt");
-        var expiryMinutesString = jwtSection["ExpiryMinutes"] ?? "60";
-        if (!int.TryParse(expiryMinutesString, out var expiryMinutes)) expiryMinutes = 60;
-
-        var response = new LoginResponseDTO { Token = token, ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes) };
+        AuthTokenDTO tokenDTO = _tokenService.GenerateToken(user);
+        var response = new AuthResponseDTO { Token = tokenDTO.Token, ExpiresAt = tokenDTO.ExpiresAt };
         return CreatedAtAction("GetById", "User", new { id = user.Id }, response);
     }
 }

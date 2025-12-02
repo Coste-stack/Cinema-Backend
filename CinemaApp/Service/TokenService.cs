@@ -9,21 +9,38 @@ namespace CinemaApp.Service;
 
 public interface ITokenService
 {
-    string GenerateToken(User user);
+    AuthTokenDTO GenerateToken(User user, int? minutes = null);
 }
 
 public class TokenService(IConfiguration config) : ITokenService
 {
     private readonly IConfiguration _config = config;
 
-    public string GenerateToken(User user)
+    public AuthTokenDTO GenerateToken(User user, int? minutes = null)
+    {
+        int effectiveMinutes;
+        if (minutes != null && minutes.Value > 0) {
+            effectiveMinutes = minutes.Value;
+        } else {
+            var jwtSection = _config.GetSection("Jwt");
+            var expiryMinutesString = jwtSection["ExpiryMinutes"] ?? "60";
+            if (!int.TryParse(expiryMinutesString, out var expiryMinutes)) expiryMinutes = 60;
+            effectiveMinutes = expiryMinutes;
+        }
+
+        var token = _GenerateToken(user, effectiveMinutes);
+        return new AuthTokenDTO { 
+            Token = token, 
+            ExpiresAt = DateTime.UtcNow.AddMinutes(effectiveMinutes) 
+        };
+    }
+
+    private string _GenerateToken(User user, int expiryMinutes)
     {
         var jwtSection = _config.GetSection("Jwt");
         var secret = jwtSection["Secret"] ?? throw new Exception("JWT secret not configured");
         var issuer = jwtSection["Issuer"] ?? "CinemaApp";
         var audience = jwtSection["Audience"] ?? "CinemaAppClients";
-        var expiryMinutesString = jwtSection["ExpiryMinutes"] ?? "60";
-        if (!int.TryParse(expiryMinutesString, out var expiryMinutes)) expiryMinutes = 60;
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
