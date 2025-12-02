@@ -13,6 +13,8 @@ public class User : EntityBase
 
     public string? PasswordHash { get; set; }
 
+    public ICollection<RefreshToken> RefreshTokens { get; } = new List<RefreshToken>();
+
     public ICollection<Booking> Bookings { get; } = new List<Booking>(); 
 
     public User()
@@ -25,4 +27,11 @@ public enum UserType
 {
     Registered,
     Guest
+}
+
+public class RefreshToken
+{
+    public string Token { get; set; } = null!;
+    public DateTime ExpiresAt { get; set; }
+    public bool Invalidated { get; set; } = false;
 }

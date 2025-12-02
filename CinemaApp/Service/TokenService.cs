@@ -2,14 +2,15 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Configuration;
 using CinemaApp.Model;
+using System.Security.Cryptography;
 
 namespace CinemaApp.Service;
 
 public interface ITokenService
 {
     AuthTokenDTO GenerateToken(User user, int? minutes = null);
+    RefreshToken GenerateRefreshToken(int daysValid = 7);
 }
 
 public class TokenService(IConfiguration config) : ITokenService
@@ -61,5 +62,19 @@ public class TokenService(IConfiguration config) : ITokenService
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public RefreshToken GenerateRefreshToken(int daysValid = 7)
+    {
+        var randomBytes = new byte[64];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomBytes);
+        string token = Convert.ToBase64String(randomBytes);
+
+        return new RefreshToken
+        {
+            Token = token,
+            ExpiresAt = DateTime.UtcNow.AddDays(daysValid)
+        };
     }
 }

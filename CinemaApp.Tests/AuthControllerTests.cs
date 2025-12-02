@@ -23,12 +23,7 @@ public class AuthControllerTests
         var service = new UserService(repo, hasher);
         tokenService = new TestTokenService();
 
-        var inMemory = new Dictionary<string, string?> { { "Jwt:ExpiryMinutes", "60" } };
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(inMemory!)
-            .Build();
-
-        return new AuthController(service, hasher, tokenService, config);
+        return new AuthController(service, hasher, tokenService);
     }
 
     [Fact]
@@ -42,7 +37,7 @@ public class AuthControllerTests
 
         var ok = Assert.IsType<OkObjectResult>(action.Result);
         var dto = Assert.IsType<AuthResponseDTO>(ok.Value);
-        Assert.Equal(TestTokenService.TokenValue, dto.Token);
+        Assert.Equal(TestTokenService.TokenValue, dto.Token.Token);
     }
 
     [Fact]
@@ -70,7 +65,7 @@ public class AuthControllerTests
             .AddInMemoryCollection(inMemory!)
             .Build();
 
-        var controller = new AuthController(service, hasher, tokenService, config);
+        var controller = new AuthController(service, hasher, tokenService);
 
         var dto = new UserCreateDTO { Email = "newuser@example.com", Password = "Secret!23" };
 
@@ -78,7 +73,7 @@ public class AuthControllerTests
 
         var created = Assert.IsType<CreatedAtActionResult>(action.Result);
         var resp = Assert.IsType<AuthResponseDTO>(created.Value);
-        Assert.Equal(TestTokenService.TokenValue, resp.Token);
+        Assert.Equal(TestTokenService.TokenValue, resp.Token.Token);
 
         // user persisted
         var inDb = context.Users.SingleOrDefault(u => u.Email == dto.Email);
@@ -88,6 +83,7 @@ public class AuthControllerTests
     private class TestTokenService : ITokenService
     {
         public const string TokenValue = "test-token-123";
-        public string GenerateToken(User user) => TokenValue;
+        public AuthTokenDTO GenerateToken(User user, int? minutes = null) => new AuthTokenDTO { Token = TokenValue, ExpiresAt = DateTime.UtcNow.AddMinutes(minutes ?? 60) };
+        public RefreshToken GenerateRefreshToken(int daysValid = 7) => new RefreshToken { Token = "rt-" + TokenValue, ExpiresAt = DateTime.UtcNow.AddDays(daysValid) };
     }
 }

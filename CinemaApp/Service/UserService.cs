@@ -9,6 +9,9 @@ public interface IUserService
     List<User> GetAll();
     User? Get(int id);
     User? Get(string email);
+    User? Get(RefreshToken refreshToken);
+    void AddRefreshToken(int userId, RefreshToken token);
+    void InvalidateRefreshToken(int userId, string token);
     User Add(UserCreateDTO dto);
     void Update(int id, UserCreateDTO dto);
 }
@@ -41,6 +44,26 @@ public class UserService : IUserService
             throw new BadRequestException("Email not valid.");
         
         return _repository.GetByEmail(email);
+    }
+
+    public User? Get(RefreshToken refreshToken)
+    {
+        if (refreshToken == null || string.IsNullOrEmpty(refreshToken.Token))
+            throw new BadRequestException("No refresh token provided.");
+        
+        return _repository.GetByRefreshToken(refreshToken);
+    }
+
+    public void AddRefreshToken(int userId, RefreshToken token)
+    {
+        if (token == null) throw new BadRequestException("Refresh token is required.");
+        _repository.AddRefreshToken(userId, token);
+    }
+
+    public void InvalidateRefreshToken(int userId, string token)
+    {
+        if (string.IsNullOrEmpty(token)) throw new BadRequestException("Token is required.");
+        _repository.InvalidateRefreshToken(userId, token);
     }
 
     public User Add(UserCreateDTO dto)

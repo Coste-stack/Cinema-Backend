@@ -103,13 +103,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<User>(entity =>
         {
             // User(One) - Booking(Many)
-            modelBuilder.Entity<User>()
+            entity
                 .HasMany(u => u.Bookings)
                 .WithOne(b => b.User)
                 .HasForeignKey(b => b.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_Bookings_Users");
-                
+
             // Add unique constraint to user email
             entity
                 .HasIndex(u => u.Email)
@@ -119,6 +119,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity
                 .Property(u => u.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // Persist RefreshTokens as an owned collection
+            entity.OwnsMany(u => u.RefreshTokens, rt =>
+            {
+                rt.WithOwner().HasForeignKey("UserId");
+                rt.ToTable("UserRefreshTokens");
+                rt.Property(r => r.Token).IsRequired();
+                rt.Property(r => r.ExpiresAt).IsRequired();
+                rt.Property(r => r.Invalidated).HasDefaultValue(false);
+                rt.HasKey("UserId", "Token");
+            });
         });
 
         // Screening(One) - Booking(Many)

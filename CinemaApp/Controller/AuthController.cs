@@ -2,20 +2,16 @@ using CinemaApp.Model;
 using CinemaApp.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
 
 namespace CinemaApp.Controller;
 
 [ApiController]
 [Route("[controller]")]
-public class AuthController(IUserService userService, IPasswordHasher<User> passwordHasher, ITokenService tokenService, IConfiguration config) : ControllerBase
+public class AuthController(IUserService userService, IPasswordHasher<User> passwordHasher, ITokenService tokenService) : ControllerBase
 {
     private readonly IUserService _userService = userService;
-    private readonly IPasswordHasher<User> _passwordHasher = passwordHasher;
     private readonly ITokenService _tokenService = tokenService;
-    private readonly IConfiguration _config = config;
-
-    
+    private readonly IPasswordHasher<User> _passwordHasher = passwordHasher;    
 
     [HttpPost("login")]
     public ActionResult<AuthResponseDTO> Login([FromBody] LoginRequestDTO request)
@@ -33,8 +29,13 @@ public class AuthController(IUserService userService, IPasswordHasher<User> pass
         var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
         if (result == PasswordVerificationResult.Success || result == PasswordVerificationResult.SuccessRehashNeeded)
         {
-            AuthTokenDTO tokenDTO = _tokenService.GenerateToken(user);
-            var response = new AuthResponseDTO { Token = tokenDTO.Token, ExpiresAt = tokenDTO.ExpiresAt };
+            AuthTokenDTO authToken = _tokenService.GenerateToken(user);
+            RefreshToken refreshToken = _tokenService.GenerateRefreshToken();
+
+            // Persist refresh token for the user safely (modify tokens only)
+            _userService.AddRefreshToken(user.Id, refreshToken);
+
+            var response = new AuthResponseDTO { Token = authToken, RefreshToken = refreshToken };
             return Ok(response);
         }
 
@@ -48,8 +49,46 @@ public class AuthController(IUserService userService, IPasswordHasher<User> pass
 
         var user = _userService.Add(dto);
 
-        AuthTokenDTO tokenDTO = _tokenService.GenerateToken(user);
-        var response = new AuthResponseDTO { Token = tokenDTO.Token, ExpiresAt = tokenDTO.ExpiresAt };
+        AuthTokenDTO authToken = _tokenService.GenerateToken(user);
+        RefreshToken refreshToken = _tokenService.GenerateRefreshToken();
+
+        // Persist refresh token for the new user
+        _userService.AddRefreshToken(user.Id, refreshToken);
+
+        var response = new AuthResponseDTO { Token = authToken, RefreshToken = refreshToken };
         return CreatedAtAction("GetById", "User", new { id = user.Id }, response);
+    }
+
+    [HttpPost("refresh-token")]
+    public ActionResult<AuthResponseDTO> RefreshToken([FromBody] RefreshToken refreshToken)
+    {
+        // Lookup user by refresh token
+        var user = _userService.Get(refreshToken);
+        if (user == null)
+            return Unauthorized("Invalid refresh token.");
+
+        // Get the token record
+        var tokenRecord = user.RefreshTokens.FirstOrDefault(rt => rt.Token == refreshToken.Token);
+        if (tokenRecord == null || tokenRecord.ExpiresAt < DateTime.UtcNow)
+            return Unauthorized("Refresh token expired or invalid.");
+
+        // Revoke old token to prevent reuse
+        _userService.InvalidateRefreshToken(user.Id, tokenRecord.Token);
+
+        // Generate new access token
+        AuthTokenDTO newAccessToken = _tokenService.GenerateToken(user);
+
+        // Generate new refresh token
+        RefreshToken newRefreshToken = _tokenService.GenerateRefreshToken();
+        _userService.AddRefreshToken(user.Id, newRefreshToken);
+
+        // Return tokens
+        var response = new AuthResponseDTO
+        {
+            Token = newAccessToken,
+            RefreshToken = newRefreshToken
+        };
+
+        return Ok(response);
     }
 }
