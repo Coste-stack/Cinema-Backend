@@ -93,7 +93,6 @@ public class BookingService : IBookingService
                 BookingId = booking.Id,
                 SeatId = t.SeatId,
                 PersonTypeId = t.PersonTypeId,
-                ScreeningId = dto.ScreeningId,
                 TotalPrice = totalPrice
             };
             booking.Tickets.Add(ticket);
@@ -141,7 +140,6 @@ public class BookingService : IBookingService
                 BookingId = booking.Id,
                 SeatId = t.SeatId,
                 PersonTypeId = t.PersonTypeId,
-                ScreeningId = request.ScreeningId,
                 TotalPrice = totalPrice
             };
             booking.Tickets.Add(ticket);

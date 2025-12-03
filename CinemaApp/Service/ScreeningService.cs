@@ -95,10 +95,10 @@ public class ScreeningService : IScreeningService
         // Get all seats in the room
         var allSeats = screening.Room?.Seats?.ToList() ?? new List<Seat>();
 
-        // Get all booked seat IDs for this screening
-        var bookedSeatIds = screening.Bookings
-            .Where(b => b.BookingStatus != BookingStatus.Cancelled)
-            .SelectMany(b => b.Tickets)
+        // Get all booked seat IDs for this screening (from bookings attached to this screening)
+        var bookedSeatIds = (screening.Bookings ?? Enumerable.Empty<Booking>())
+            .Where(b => b.BookingStatus != BookingStatus.Cancelled && b.ScreeningId == screeningId)
+            .SelectMany(b => b.Tickets ?? Enumerable.Empty<Ticket>())
             .Select(t => t.SeatId)
             .ToHashSet();
 

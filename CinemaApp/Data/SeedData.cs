@@ -431,7 +431,6 @@ public static class SeedData
                 {
                     BookingId = booking.Id,
                     SeatId = seatId,
-                    ScreeningId = booking.ScreeningId,
                     TotalPrice = screening.BasePrice,
                     PersonTypeId = personType.Id
                 };
@@ -456,7 +455,12 @@ public static class SeedData
         }
 
         // seed bookings for a subset of screenings
-        var sampleScreenings = screenings.OrderBy(s => rnd.Next()).Take(Math.Min(50, screenings.Count)).ToList();
+        // Use a deterministic ordering for frontend development (stable across runs)
+        var sampleScreenings = screenings
+            .OrderBy(s => s.StartTime)
+            .ThenBy(s => s.RoomId)
+            .Take(Math.Min(50, screenings.Count))
+            .ToList();
         foreach (var s in sampleScreenings)
         {
             // get seats in room
@@ -492,7 +496,6 @@ public static class SeedData
                 var ticket = new Ticket {
                     BookingId = booking.Id,
                     SeatId = seatId,
-                    ScreeningId = s.Id,
                     TotalPrice = s.BasePrice,
                     PersonTypeId = personType.Id
                 };

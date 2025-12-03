@@ -22,16 +22,19 @@ public class StatisticsRepository : IStatisticsRepository
     {
         // Project directly to PopularMovieDTO with ticket counts
         var q = _context.Tickets
-            .Include(t => t.Screening) // ensure screening is loaded
-            .ThenInclude(s => s!.Movie)
-            .Where(t => t.ScreeningId != 0)
-            .GroupBy(t => new { 
-                t.Screening!.MovieId, 
-                t.Screening.Movie.Title, 
-                t.Screening.Movie.Description, 
-                t.Screening.Movie.Duration, 
-                t.Screening.Movie.Rating, 
-                t.Screening.Movie.ReleaseDate })
+            .Include(t => t.Booking)
+                .ThenInclude(b => b.Screening)
+                    .ThenInclude(s => s!.Movie)
+            // ensure tickets are attached to bookings with screenings
+            .Where(t => t.Booking != null && t.Booking.ScreeningId != 0)
+            .GroupBy(t => new {
+                MovieId = t.Booking!.Screening!.MovieId,
+                Title = t.Booking.Screening.Movie.Title,
+                Description = t.Booking.Screening.Movie.Description,
+                Duration = t.Booking.Screening.Movie.Duration,
+                Rating = t.Booking.Screening.Movie.Rating,
+                ReleaseDate = t.Booking.Screening.Movie.ReleaseDate
+            })
             .Select(g => new PopularMovieDTO {
                 Movie = new MovieDto {
                     Id = g.Key.MovieId,

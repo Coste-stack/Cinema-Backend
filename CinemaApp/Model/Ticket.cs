@@ -16,8 +16,6 @@ public class Ticket : EntityBase
     [Required]
     public int SeatId { get; set; }
     public Seat Seat { get; set; } = null!;
-
-    public int ScreeningId { get; set; }
-    public Screening? Screening { get; set; }
+    
 
 }
