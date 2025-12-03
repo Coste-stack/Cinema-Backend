@@ -47,6 +47,7 @@ public class MovieRepository : IMovieRepository
                 Screenings = m.Screenings
                     .Select(s => new ScreeningDto
                     {
+                        Id = s.Id,
                         StartTime = s.StartTime,
                         Language = s.Language,
                         ProjectionType = s.ProjectionType.Name
