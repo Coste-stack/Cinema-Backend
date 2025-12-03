@@ -11,3 +11,4 @@ public class MovieDto {
   public DateTime? ReleaseDate { get; set; }
   public List<string> Genres { get; set; } = new();
 }
+

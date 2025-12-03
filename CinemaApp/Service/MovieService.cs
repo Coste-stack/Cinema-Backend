@@ -1,5 +1,7 @@
+using CinemaApp.DTO;
 using CinemaApp.Model;
 using CinemaApp.Repository;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 
 namespace CinemaApp.Service;
@@ -7,8 +9,10 @@ namespace CinemaApp.Service;
 public interface IMovieService
 {
     List<Movie> GetAll();
+    List<MovieFullDto> GetAllFull();
     Movie GetById(int id);
-    List<Movie> Search(
+    IEnumerable<object> Search(
+        bool full,
         string? title,
         List<int>? genreIds,
         int? minRating,
@@ -29,7 +33,12 @@ public class MovieService : IMovieService
 
     public List<Movie> GetAll()
     {
-        return _repository.GetAll().ToList();
+        return _repository.GetAll();
+    }
+
+    public List<MovieFullDto> GetAllFull()
+    {
+        return _repository.GetAllFull();
     }
 
     public Movie GetById(int id)
@@ -40,7 +49,8 @@ public class MovieService : IMovieService
         return movie;
     }
 
-    public List<Movie> Search(
+    public IEnumerable<object> Search(
+        bool full,
         string? title,
         List<int>? genreIds,
         int? minRating,
@@ -96,6 +106,11 @@ public class MovieService : IMovieService
                 m.Screenings != null && 
                 m.Screenings.Any(s => s.StartTime > now)
             );
+        }
+
+        if (full)
+        {
+            query = query.Include(m => m.Screenings);
         }
 
         return query.ToList();

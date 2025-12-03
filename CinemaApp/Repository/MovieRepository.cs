@@ -2,12 +2,14 @@
 using CinemaApp.Model;
 using CinemaApp.Data;
 using Microsoft.EntityFrameworkCore;
+using CinemaApp.DTO;
 
 namespace CinemaApp.Repository;
 
 public interface IMovieRepository
 {
     List<Movie> GetAll();
+    List<MovieFullDto> GetAllFull();
     Movie? GetById(int id);
     Movie Add(Movie movie);
     void Update(Movie movie);
@@ -20,7 +22,39 @@ public class MovieRepository : IMovieRepository
 
     public MovieRepository(AppDbContext context) => _context = context;
 
-    public List<Movie> GetAll() => _context.Movies.Include(m => m.Genres).ToList();
+    public List<Movie> GetAll() => 
+        _context.Movies
+            .Include(m => m.Genres)
+            .ToList();
+
+    public List<MovieFullDto> GetAllFull()
+    {
+        return _context.Movies
+            .Include(m => m.Genres)
+            .Include(m => m.Screenings)
+                .ThenInclude(s => s.ProjectionType)
+            .Select(m => new MovieFullDto
+            {
+                Id = m.Id,
+                Title = m.Title ?? "",
+                Description  = m.Description,
+                Duration = m.Duration,
+                Rating = m.Rating,
+                ReleaseDate = m.ReleaseDate,
+                Genres = m.Genres
+                    .Select(g => g.Name)
+                    .ToList(),
+                Screenings = m.Screenings
+                    .Select(s => new ScreeningDto
+                    {
+                        StartTime = s.StartTime,
+                        Language = s.Language,
+                        ProjectionType = s.ProjectionType.Name
+                    })
+                    .ToList()
+            })
+            .ToList();
+    } 
 
     public Movie? GetById(int id) => _context.Movies.Include(m => m.Genres).FirstOrDefault(m => m.Id == id);
 

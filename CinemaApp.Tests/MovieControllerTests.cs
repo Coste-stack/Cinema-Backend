@@ -36,8 +36,8 @@ public class MovieControllerTests
         var controller = CreateControllerWithSeededData();
 
         var result = controller.GetAll();
-
-        var movies = Assert.IsType<List<Movie>>(result.Value);
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var movies = Assert.IsType<List<Movie>>(ok.Value);
         Assert.True(movies.Count >= 2);
         Assert.Contains(movies, m => m.Title == "Inception");
         Assert.Contains(movies, m => m.Title == "The Dark Knight");
@@ -49,8 +49,11 @@ public class MovieControllerTests
         var controller = CreateControllerWithSeededData();
 
         var result = controller.GetById(1);
-
-        var movie = Assert.IsType<Movie>(result.Value);
+        Movie movie;
+        if (result.Result is OkObjectResult okGet)
+            movie = Assert.IsType<Movie>(okGet.Value);
+        else
+            movie = Assert.IsType<Movie>(result.Value);
         Assert.Equal(1, movie.Id);
         Assert.Equal("Inception", movie.Title);
     }
@@ -153,7 +156,12 @@ public class MovieControllerTests
 
         Assert.IsType<NoContentResult>(result);
 
-        var updated = controller.GetById(existingMovie.Id).Value!;
+        var getUpdated = controller.GetById(existingMovie.Id);
+        Movie updated;
+        if (getUpdated.Result is OkObjectResult okUpdated)
+            updated = Assert.IsType<Movie>(okUpdated.Value);
+        else
+            updated = Assert.IsType<Movie>(getUpdated.Value);
         Assert.Equal("Inception Reloaded", updated.Title);
         Assert.Equal(155, updated.Duration);
     }
@@ -162,14 +170,16 @@ public class MovieControllerTests
     public void Delete_RemovesMovie_WhenExists()
     {
         var controller = CreateControllerWithSeededData();
-        var movies = controller.GetAll().Value!;
+        var allResult = controller.GetAll();
+        var allOk = Assert.IsType<OkObjectResult>(allResult);
+        var movies = Assert.IsType<List<Movie>>(allOk.Value);
         var lastMovie = movies[movies.Count - 1];
 
         var result = controller.Delete(lastMovie.Id);
 
         Assert.IsType<NoContentResult>(result);
 
-        Assert.Throws<NotFoundException>(() => controller.GetById(lastMovie.Id).Result);
+        Assert.Throws<NotFoundException>(() => controller.GetById(lastMovie.Id));
     }
 
     [Fact]
@@ -186,8 +196,8 @@ public class MovieControllerTests
         var controller = CreateControllerWithSeededData();
 
         var result = controller.Search(null, null, null, null, null, null);
-
-        var movies = Assert.IsType<List<Movie>>(result.Value);
+        var okSearch = Assert.IsType<OkObjectResult>(result);
+        var movies = Assert.IsType<List<Movie>>(okSearch.Value);
         Assert.True(movies.Count >= 2);
     }
 
@@ -197,8 +207,8 @@ public class MovieControllerTests
         var controller = CreateControllerWithSeededData();
 
         var result = controller.Search("inception", null, null, null, null, null);
-
-        var movies = Assert.IsType<List<Movie>>(result.Value);
+        var okSearch = Assert.IsType<OkObjectResult>(result);
+        var movies = Assert.IsType<List<Movie>>(okSearch.Value);
         Assert.Single(movies);
         Assert.Equal("Inception", movies[0].Title);
     }
@@ -209,8 +219,8 @@ public class MovieControllerTests
         var controller = CreateControllerWithSeededData();
 
         var result = controller.Search("dark", null, null, null, null, null);
-
-        var movies = Assert.IsType<List<Movie>>(result.Value);
+        var okSearch = Assert.IsType<OkObjectResult>(result);
+        var movies = Assert.IsType<List<Movie>>(okSearch.Value);
         Assert.Single(movies);
         Assert.Contains("Dark", movies[0].Title);
     }
@@ -222,8 +232,8 @@ public class MovieControllerTests
 
         // Sci-Fi genre ID 1 from TestDataSeeder (Inception has Sci-Fi)
         var result = controller.Search(null, new List<int> { 1 }, null, null, null, null);
-
-        var movies = Assert.IsType<List<Movie>>(result.Value);
+        var okSearch = Assert.IsType<OkObjectResult>(result);
+        var movies = Assert.IsType<List<Movie>>(okSearch.Value);
         Assert.NotEmpty(movies);
         Assert.All(movies, m => Assert.Contains(m.Genres, g => g.Id == 1));
     }
@@ -235,8 +245,8 @@ public class MovieControllerTests
 
         // Both movies have Thriller (ID 3) from TestDataSeeder
         var result = controller.Search(null, new List<int> { 3 }, null, null, null, null);
-
-        var movies = Assert.IsType<List<Movie>>(result.Value);
+        var okSearch = Assert.IsType<OkObjectResult>(result);
+        var movies = Assert.IsType<List<Movie>>(okSearch.Value);
         Assert.True(movies.Count >= 2);
     }
 
@@ -247,8 +257,8 @@ public class MovieControllerTests
 
         // Both seeded movies are PG13 (value 1)
         var result = controller.Search(null, null, (int)MovieRating.PG13, null, null, null);
-
-        var movies = Assert.IsType<List<Movie>>(result.Value);
+        var okSearch = Assert.IsType<OkObjectResult>(result);
+        var movies = Assert.IsType<List<Movie>>(okSearch.Value);
         Assert.NotEmpty(movies);
         Assert.All(movies, m => Assert.True(m.Rating >= MovieRating.PG13));
     }
@@ -260,8 +270,8 @@ public class MovieControllerTests
 
         // Filter for movies after 2009
         var result = controller.Search(null, null, null, new DateTime(2009, 1, 1), null, null);
-
-        var movies = Assert.IsType<List<Movie>>(result.Value);
+        var okSearch = Assert.IsType<OkObjectResult>(result);
+        var movies = Assert.IsType<List<Movie>>(okSearch.Value);
         Assert.NotEmpty(movies);
         Assert.All(movies, m => Assert.True(m.ReleaseDate > new DateTime(2009, 1, 1)));
     }
@@ -273,8 +283,8 @@ public class MovieControllerTests
 
         // Search for Sci-Fi movies (ID 1) released after 2009
         var result = controller.Search(null, new List<int> { 1 }, null, new DateTime(2009, 1, 1), null, null);
-
-        var movies = Assert.IsType<List<Movie>>(result.Value);
+        var okSearch = Assert.IsType<OkObjectResult>(result);
+        var movies = Assert.IsType<List<Movie>>(okSearch.Value);
         Assert.NotEmpty(movies);
         Assert.All(movies, m => 
         {
@@ -289,8 +299,8 @@ public class MovieControllerTests
         var controller = CreateControllerWithSeededData();
 
         var result = controller.Search("NonexistentMovie", null, null, null, null, null);
-
-        var movies = Assert.IsType<List<Movie>>(result.Value);
+        var okSearch = Assert.IsType<OkObjectResult>(result);
+        var movies = Assert.IsType<List<Movie>>(okSearch.Value);
         Assert.Empty(movies);
     }
 
@@ -301,8 +311,8 @@ public class MovieControllerTests
 
         // Search for "Inception" with Sci-Fi genre (ID 1)
         var result = controller.Search("Inception", new List<int> { 1 }, null, null, null, null);
-
-        var movies = Assert.IsType<List<Movie>>(result.Value);
+        var okSearch = Assert.IsType<OkObjectResult>(result);
+        var movies = Assert.IsType<List<Movie>>(okSearch.Value);
         Assert.Single(movies);
         Assert.Equal("Inception", movies[0].Title);
         Assert.Contains(movies[0].Genres, g => g.Id == 1);

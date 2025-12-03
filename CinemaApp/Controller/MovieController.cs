@@ -1,4 +1,5 @@
 using CinemaApp.Model;
+using CinemaApp.DTO;
 using CinemaApp.Service;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,9 +12,12 @@ public class MovieController(IMovieService service) : ControllerBase
     private readonly IMovieService _service = service;
 
     [HttpGet]
-    public ActionResult<List<Movie>> GetAll() 
+    public ActionResult GetAll([FromQuery] bool full = false) 
     {
-        return _service.GetAll();
+        if (full) {
+            return Ok(_service.GetAllFull());
+        }
+        return Ok(_service.GetAll());
     }
 
     [HttpGet("{id}")]
@@ -23,16 +27,16 @@ public class MovieController(IMovieService service) : ControllerBase
     }
 
     [HttpGet("search")]
-    public ActionResult<List<Movie>> Search(
+    public ActionResult Search(
         [FromQuery] string? title,
         [FromQuery] List<int>? genreIds,
         [FromQuery] int? minRating,
         [FromQuery] DateTime? releasedAfter,
         [FromQuery] int? cinemaId,
-        [FromQuery] bool? currentlyShowing
+        [FromQuery] bool? currentlyShowing,
+        [FromQuery] bool full = false
     ) {
-        var movies = _service.Search(title, genreIds, minRating, releasedAfter, cinemaId, currentlyShowing);
-        return movies;
+        return Ok(_service.Search(full, title, genreIds, minRating, releasedAfter, cinemaId, currentlyShowing));
     }
 
     [HttpPost]
