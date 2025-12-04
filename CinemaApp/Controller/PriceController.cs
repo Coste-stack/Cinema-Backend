@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CinemaApp.Controller;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class PriceController : ControllerBase
 {
     private readonly IPriceCalculationService _priceService;
@@ -19,18 +19,10 @@ public class PriceController : ControllerBase
     public ActionResult<object> CalculatePrice(
         [FromQuery] int screeningId,
         [FromQuery] int seatId,
-        [FromQuery] int personTypeId)
+        [FromQuery] string personTypeName)
     {
-        if (screeningId <= 0 || seatId <= 0 || personTypeId <= 0)
-            return BadRequest("All IDs must be positive integers.");
-
-        var price = _priceService.CalculateTicketPrice(screeningId, seatId, personTypeId);
-        return Ok(new { 
-            screeningId, 
-            seatId, 
-            personTypeId, 
-            price 
-        });
+        decimal price = _priceService.CalculateTicketPrice(screeningId, seatId, personTypeName);
+        return Ok(new { price });
     }
 
     [HttpPost("calculate-bulk")]

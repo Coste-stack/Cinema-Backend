@@ -19,10 +19,18 @@ public class LookupController<T> : ControllerBase where T : LookupEntity
     public ActionResult<List<T>> GetAll() =>
         _service.GetAll();
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public ActionResult<T> GetById(int id)
     {
         var projectionType = _service.GetById(id);
+        if (projectionType == null) return NotFound();
+        return Ok(projectionType);
+    }
+
+    [HttpGet("by-name/{name}")]
+    public ActionResult<T> GetByName(string name)
+    {
+        var projectionType = _service.GetByName(name);
         if (projectionType == null) return NotFound();
         return Ok(projectionType);
     }

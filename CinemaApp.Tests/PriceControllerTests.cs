@@ -1,5 +1,6 @@
 using CinemaApp.Controller;
 using CinemaApp.DTO.Ticket;
+using CinemaApp.Model;
 using CinemaApp.Repository;
 using CinemaApp.Service;
 using CinemaApp.Tests.Helpers;
@@ -26,7 +27,9 @@ public class PriceControllerTests
 
         var bookingRepo = new BookingRepository(context);
         var screeningRepo = new ScreeningRepository(context);
-        var priceService = new PriceCalculationService(bookingRepo, screeningRepo);
+        var personTypeRepo = new LookupRepository<PersonType>(context);
+        var personTypeService = new LookupService<PersonType>(personTypeRepo);
+        var priceService = new PriceCalculationService(bookingRepo, screeningRepo, personTypeService);
         
         return new PriceController(priceService);
     }
@@ -37,28 +40,28 @@ public class PriceControllerTests
         var controller = CreateControllerWithSeededData(out int screeningId, out int seatId1, out int seatId2);
 
         // Test Regular Seat + Adult (BasePrice: 12, SeatType: 0, Discount: 0%) = 12.00
-        var result1 = controller.CalculatePrice(screeningId, seatId1, personTypeId: 1);
+        var result1 = controller.CalculatePrice(screeningId, seatId1, personTypeName: "Adult");
         var okResult1 = Assert.IsType<OkObjectResult>(result1.Result);
         var value1 = okResult1.Value!;
         var price1 = (decimal)value1.GetType().GetProperty("price")!.GetValue(value1)!;
         Assert.Equal(12.00m, price1);
 
         // Test VIP Seat + Adult (BasePrice: 12, SeatType: +5, Discount: 0%) = 17.00
-        var result2 = controller.CalculatePrice(screeningId, seatId2, personTypeId: 1);
+        var result2 = controller.CalculatePrice(screeningId, seatId2, personTypeName: "Adult");
         var okResult2 = Assert.IsType<OkObjectResult>(result2.Result);
         var value2 = okResult2.Value!;
         var price2 = (decimal)value2.GetType().GetProperty("price")!.GetValue(value2)!;
         Assert.Equal(17.00m, price2);
 
         // Test Regular Seat + Child (BasePrice: 12, SeatType: 0, Discount: 30%) = 8.40
-        var result3 = controller.CalculatePrice(screeningId, seatId1, personTypeId: 2);
+        var result3 = controller.CalculatePrice(screeningId, seatId1, personTypeName: "Child");
         var okResult3 = Assert.IsType<OkObjectResult>(result3.Result);
         var value3 = okResult3.Value!;
         var price3 = (decimal)value3.GetType().GetProperty("price")!.GetValue(value3)!;
         Assert.Equal(8.40m, price3);
 
         // Test VIP Seat + Child (BasePrice: 12, SeatType: +5, Discount: 30%) = 11.90
-        var result4 = controller.CalculatePrice(screeningId, seatId2, personTypeId: 2);
+        var result4 = controller.CalculatePrice(screeningId, seatId2, personTypeName: "Child");
         var okResult4 = Assert.IsType<OkObjectResult>(result4.Result);
         var value4 = okResult4.Value!;
         var price4 = (decimal)value4.GetType().GetProperty("price")!.GetValue(value4)!;
@@ -66,18 +69,13 @@ public class PriceControllerTests
     }
 
     [Fact]
-    public void CalculatePrice_ReturnsBadRequest_WhenIdsAreInvalid()
+    public void CalculatePrice_ThrowsBadRequest_WhenIdsAreInvalid()
     {
         var controller = CreateControllerWithSeededData(out int screeningId, out int seatId1, out int seatId2);
 
-        var result1 = controller.CalculatePrice(screeningId: 0, seatId: seatId1, personTypeId: 1);
-        Assert.IsType<BadRequestObjectResult>(result1.Result);
-
-        var result2 = controller.CalculatePrice(screeningId, seatId: -1, personTypeId: 1);
-        Assert.IsType<BadRequestObjectResult>(result2.Result);
-
-        var result3 = controller.CalculatePrice(screeningId, seatId: seatId1, personTypeId: 0);
-        Assert.IsType<BadRequestObjectResult>(result3.Result);
+        Assert.Throws<BadRequestException>(() => controller.CalculatePrice(screeningId: 0, seatId: seatId1, personTypeName: "Adult"));
+        Assert.Throws<BadRequestException>(() => controller.CalculatePrice(screeningId, seatId: -1, personTypeName: "Adult"));
+        Assert.Throws<BadRequestException>(() => controller.CalculatePrice(screeningId, seatId: seatId1, personTypeName: ""));
     }
 
     [Fact]
@@ -90,9 +88,9 @@ public class PriceControllerTests
             ScreeningId = screeningId,
             Tickets = new List<TicketPriceRequestDTO>
             {
-                new TicketPriceRequestDTO { SeatId = seatId1, PersonTypeId = 1 }, // 12.00
-                new TicketPriceRequestDTO { SeatId = seatId2, PersonTypeId = 2 }, // 11.90
-                new TicketPriceRequestDTO { SeatId = seatId1, PersonTypeId = 2 }  // 8.40
+                new TicketPriceRequestDTO { SeatId = seatId1, PersonTypeName = "Adult" }, // 12.00
+                new TicketPriceRequestDTO { SeatId = seatId2, PersonTypeName = "Child" }, // 11.90
+                new TicketPriceRequestDTO { SeatId = seatId1, PersonTypeName = "Child" }  // 8.40
             }
         };
 

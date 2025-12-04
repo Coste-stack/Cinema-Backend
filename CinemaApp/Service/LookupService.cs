@@ -7,6 +7,7 @@ public interface ILookupService<T> where T : LookupEntity
 {
     List<T> GetAll();
     T? GetById(int id);
+    T? GetByName(string name);
     T Create(T entity);
     void Update(int id, T entity);
     void Delete(int id);
@@ -24,6 +25,8 @@ public class LookupService<T> : ILookupService<T> where T : LookupEntity
     public List<T> GetAll() => _repository.GetAll().ToList();
 
     public T? GetById(int id) => _repository.GetById(id);
+
+    public T? GetByName(string name) => _repository.GetByName(name);
 
     public T Create(T projectionType)
     {

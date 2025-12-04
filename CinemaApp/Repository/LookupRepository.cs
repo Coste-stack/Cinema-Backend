@@ -9,6 +9,7 @@ public interface ILookupRepository<T> where T : LookupEntity
 {
     IEnumerable<T> GetAll();
     T? GetById(int id);
+    T? GetByName(string name);
     T Add(T entity);
     void Update(T entity);
     void Delete(T entity);
@@ -28,6 +29,11 @@ public class LookupRepository<T> : ILookupRepository<T> where T : LookupEntity
     public T? GetById(int id)
     {
         return _context.Set<T>().Find(id);
+    }
+
+    public T? GetByName(string name)
+    {
+        return _context.Set<T>().FirstOrDefault(e => e.Name == name);
     }
 
     public T Add(T entity)

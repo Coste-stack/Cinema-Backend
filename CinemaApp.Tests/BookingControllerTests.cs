@@ -29,7 +29,9 @@ public class BookingControllerTests
         var bookingRepo = new BookingRepository(context);
         var screeningRepo = new ScreeningRepository(context);
         var ticketRepo = new TicketRepository(context);
-        var priceService = new PriceCalculationService(bookingRepo, screeningRepo);
+        var personTypeRepo = new LookupRepository<PersonType>(context);
+        var personTypeService = new LookupService<PersonType>(personTypeRepo);
+        var priceService = new PriceCalculationService(bookingRepo, screeningRepo, personTypeService);
         var bookingService = new BookingService(bookingRepo, ticketRepo, priceService);
 
         return new BookingController(bookingService);
