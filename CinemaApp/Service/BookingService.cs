@@ -151,6 +151,10 @@ public class BookingService : IBookingService
                 resolvedUserId = newUser.Id;
             }
         }
+        else
+        {
+            throw new BadRequestException("Either authentication or email is required to create a booking.");
+        }
 
         // Build booking with Pending status to reserve seats
         Booking booking = new Booking

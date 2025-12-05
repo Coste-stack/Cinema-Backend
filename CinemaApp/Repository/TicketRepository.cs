@@ -26,13 +26,14 @@ public class TicketRepository : ITicketRepository
     public bool IsSeatTaken(int seatId, int screeningId)
     {
         var now = DateTime.UtcNow;
+        var expirationThreshold = now.Subtract(BookingConfiguration.PendingBookingHoldDuration);
         
         return _context.Tickets
             .Any(t => t.SeatId == seatId &&
                 t.Booking.ScreeningId == screeningId &&
                 (t.Booking.BookingStatus == BookingStatus.Confirmed ||
                  (t.Booking.BookingStatus == BookingStatus.Pending && 
-                  t.Booking.BookingTime.Add(BookingConfiguration.PendingBookingHoldDuration) >= now))
+                  t.Booking.BookingTime >= expirationThreshold))
                 );
     }
 }

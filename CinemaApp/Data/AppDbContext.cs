@@ -84,11 +84,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_Tickets_Bookings");
 
-        // Ticket(One) - Seat(One)
+        // Ticket(Many) - Seat(One)
         modelBuilder.Entity<Ticket>()
             .HasOne(t => t.Seat)
-            .WithOne()
-            .HasForeignKey<Ticket>(t => t.SeatId)
+            .WithMany()
+            .HasForeignKey(t => t.SeatId)
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_Tickets_Seat");
 
