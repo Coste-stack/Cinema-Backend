@@ -12,7 +12,7 @@ public interface IBookingService
     List<Booking> GetAll();
     Booking GetById(int id);
     Booking Create(BookingCreateDto dto);
-    Booking InitiateBooking(BookingRequestDTO request);
+    Booking InitiateBooking(BookingRequestDTO request, int? authUserId = null);
     void ConfirmBooking(int id);
     void CancelBooking(int id);
     List<Booking> GetUserBookings(int userId);
@@ -23,15 +23,21 @@ public class BookingService : IBookingService
     private readonly IBookingRepository _bookingRepo;
     private readonly ITicketRepository _ticketRepo;
     private readonly IPriceCalculationService _priceService;
+    private readonly IUserService _userService;
+    private readonly ILookupService<PersonType> _personTypeService;
 
     public BookingService(
         IBookingRepository bookingRepo, 
         ITicketRepository ticketRepo,
-        IPriceCalculationService priceService)
+        IPriceCalculationService priceService,
+        IUserService userService,
+        ILookupService<PersonType> personTypeService)
     {
         _bookingRepo = bookingRepo;
         _ticketRepo = ticketRepo;
         _priceService = priceService;
+        _userService = userService;
+        _personTypeService = personTypeService;
     }
 
     private static bool IsBookingExpired(Booking booking)
@@ -82,17 +88,22 @@ public class BookingService : IBookingService
         // Create tickets and attach booking id
         foreach (TicketCreateDto t in dto.Tickets)
         {
+            // Resolve PersonType by name
+            var personType = _personTypeService.GetByName(t.PersonTypeName);
+            if (personType == null)
+                throw new BadRequestException($"PersonType '{t.PersonTypeName}' not found.");
+
             // Use the centralized price calculation service
             decimal totalPrice = _priceService.CalculateTicketPrice(
                 dto.ScreeningId, 
                 t.SeatId, 
-                t.PersonTypeId);
+                t.PersonTypeName);
 
             Ticket ticket = new Ticket
             {
                 BookingId = booking.Id,
                 SeatId = t.SeatId,
-                PersonTypeId = t.PersonTypeId,
+                PersonTypeId = personType.Id,
                 TotalPrice = totalPrice
             };
             booking.Tickets.Add(ticket);
@@ -101,7 +112,7 @@ public class BookingService : IBookingService
         return _bookingRepo.Add(booking);
     }
 
-    public Booking InitiateBooking(BookingRequestDTO request)
+    public Booking InitiateBooking(BookingRequestDTO request, int? authUserId = null)
     {
         if (request == null)
             throw new BadRequestException("Booking data is required.");
@@ -119,27 +130,54 @@ public class BookingService : IBookingService
                 throw new ConflictException($"Seat {t.SeatId} is already taken for screening {request.ScreeningId}.");
         }
 
+        // Resolve user authenticated (jwt) or guest (email)
+        int resolvedUserId = 0;
+        if (authUserId != null && authUserId > 0)
+        {
+            resolvedUserId = authUserId.Value;
+        }
+        else if (!string.IsNullOrWhiteSpace(request.Email))
+        {
+            // Try to find existing user by email
+            var existingUser = _userService.Get(request.Email);
+            if (existingUser != null)
+            {
+                resolvedUserId = existingUser.Id;
+            }
+            else
+            {
+                // Create a guest user record (no password)
+                var newUser = _userService.Add(new UserCreateDTO { Email = request.Email });
+                resolvedUserId = newUser.Id;
+            }
+        }
+
         // Build booking with Pending status to reserve seats
         Booking booking = new Booking
         {
             ScreeningId = request.ScreeningId,
             BookingTime = DateTime.UtcNow,
             BookingStatus = BookingStatus.Pending,
-            UserId = request.UserId ?? 0
+            UserId = resolvedUserId
         };
 
         foreach (TicketCreateDto t in request.Tickets)
         {
+            // Resolve PersonType by name
+            var personType = _personTypeService.GetByName(t.PersonTypeName);
+            if (personType == null)
+                throw new BadRequestException($"PersonType '{t.PersonTypeName}' not found.");
+
             decimal totalPrice = _priceService.CalculateTicketPrice(
                 request.ScreeningId,
                 t.SeatId,
-                t.PersonTypeId);
+                t.PersonTypeName);
 
             Ticket ticket = new Ticket
             {
                 BookingId = booking.Id,
                 SeatId = t.SeatId,
-                PersonTypeId = t.PersonTypeId,
+                PersonTypeId = personType.Id,
                 TotalPrice = totalPrice
             };
             booking.Tickets.Add(ticket);

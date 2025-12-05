@@ -2,6 +2,9 @@ using CinemaApp.DTO;
 using CinemaApp.Model;
 using CinemaApp.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace CinemaApp.Controller
 {
@@ -10,8 +13,13 @@ namespace CinemaApp.Controller
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _service;
+        private readonly IUserService _userService;
 
-        public BookingController(IBookingService service) => _service = service;
+        public BookingController(IBookingService service, IUserService userService)
+        {
+            _service = service;
+            _userService = userService;
+        }
 
         [HttpGet]
         public ActionResult<List<Booking>> GetAll()
@@ -26,31 +34,65 @@ namespace CinemaApp.Controller
         }
 
         [HttpPost("initiate")]
+        [AllowAnonymous]
         public IActionResult InitiateBooking([FromBody] BookingRequestDTO request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            
+            // Extract user id from JWT and pass to service
+            int? authUserId = null;
+            if (User?.Identity != null && User.Identity.IsAuthenticated)
+            {
+                var sub = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                          ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(sub, out var userId))
+                {
+                    authUserId = userId;
+                }
+            }
 
-            var booking = _service.InitiateBooking(request);
+            var booking = _service.InitiateBooking(request, authUserId);
             return CreatedAtAction(nameof(GetById), new { id = booking.Id }, booking);
         }
 
         [HttpPost("{id:int}/confirm")]
-        public IActionResult ConfirmBooking(int id)
+        [AllowAnonymous]
+        public IActionResult ConfirmBooking(int id, [FromBody] BookingActionDTO? dto)
         {
-            _service.ConfirmBooking(id);
-            return NoContent();
+            var booking = _service.GetById(id);
+
+            if (Helpers.BookingAuthorization.IsAuthorized(User, _userService, booking, dto?.Email))
+            {
+                _service.ConfirmBooking(id);
+                return NoContent();
+            }
+
+            return Forbid();
         }
 
         [HttpPost("{id:int}/cancel")]
-        public IActionResult CancelBooking(int id)
+        [AllowAnonymous]
+        public IActionResult CancelBooking(int id, [FromBody] BookingActionDTO? dto)
         {
-            _service.CancelBooking(id);
-            return NoContent();
+            var booking = _service.GetById(id);
+
+            if (Helpers.BookingAuthorization.IsAuthorized(User, _userService, booking, dto?.Email))
+            {
+                _service.CancelBooking(id);
+                return NoContent();
+            }
+
+            return Forbid();
         }
 
         [HttpGet("my-bookings")]
-        public IActionResult GetMyBookings([FromQuery] int userId)
+        [Authorize]
+        public IActionResult GetMyBookings()
         {
+            var sub = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                      ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(sub, out var userId)) return Forbid();
+
             var bookings = _service.GetUserBookings(userId);
             return Ok(bookings);
         }

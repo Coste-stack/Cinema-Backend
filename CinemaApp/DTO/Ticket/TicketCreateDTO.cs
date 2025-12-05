@@ -7,6 +7,6 @@ public class TicketCreateDto
     [Range(1, int.MaxValue, ErrorMessage = "SeatId must be a positive integer.")]
     public int SeatId { get; set; }
     
-    [Range(1, int.MaxValue, ErrorMessage = "PersonTypeId must be a positive integer.")]
-    public int PersonTypeId { get; set; }
+    [Required(ErrorMessage = "PersonTypeName is required.")]
+    public string PersonTypeName { get; set; } = null!;
 }

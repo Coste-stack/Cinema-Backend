@@ -8,8 +8,8 @@ public class BookingRequestDTO
     [Required]
     public int ScreeningId { get; set; }
 
-    // Optional user id for authenticated users
-    public int? UserId { get; set; }
+    [EmailAddress]
+    public string? Email { get; set; }
 
     [Required]
     [MinLength(1)]
