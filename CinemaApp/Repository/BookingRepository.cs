@@ -2,6 +2,8 @@
 using CinemaApp.Model;
 using CinemaApp.Data;
 using Microsoft.EntityFrameworkCore;
+using CinemaApp.DTO;
+using System.Linq;
 
 namespace CinemaApp.Repository;
 
@@ -9,7 +11,7 @@ public interface IBookingRepository
 {
     List<Booking> GetAll();
     Booking? GetById(int id);
-    List<Booking> GetByUserId(int userId);
+    List<UserBookingDTO> GetByUserId(int userId);
     Booking Add(Booking booking);
     Booking Update(Booking booking);
     
@@ -42,15 +44,56 @@ public class BookingRepository : IBookingRepository
             .FirstOrDefault(b => b.Id == id);
     }
 
-    public List<Booking> GetByUserId(int userId)
+    public List<UserBookingDTO> GetByUserId(int userId)
     {
-        return _context.Bookings
+        var bookings = _context.Bookings
             .Include(b => b.Tickets)
                 .ThenInclude(t => t.Seat)
+                    .ThenInclude(s => s.SeatType)
             .Include(b => b.Tickets)
                 .ThenInclude(t => t.PersonType)
+            .Include(b => b.Screening)
+                .ThenInclude(s => s!.ProjectionType)
+            .Include(b => b.Screening)
+                .ThenInclude(s => s!.Movie)
             .Where(b => b.UserId == userId)
+            .AsNoTracking()
             .ToList();
+
+        return bookings.Select(b => new UserBookingDTO
+        {
+            BookingId = b.Id,
+            Screening = new UserScreeningDTO
+            {
+                ScreeningId = b.Screening?.Id ?? 0,
+                StartTime = b.Screening!.StartTime,
+                EndTime = b.Screening!.EndTime ?? b.Screening!.StartTime,
+                Language = b.Screening?.Language,
+                ProjectionType = b.Screening!.ProjectionType.Name,
+                Movie = new UserMovieDTO
+                {
+                    MovieId = b.Screening!.Movie.Id,
+                    Title = b.Screening!.Movie.Title ?? string.Empty,
+                    Genres = b.Screening!.Movie.Genres ?? new List<Genre>(),
+                    Description = b.Screening!.Movie.Description,
+                    ReleaseDate = b.Screening!.Movie.ReleaseDate?.ToString("yyyy-MM-dd"),
+                    Rating = b.Screening!.Movie.Rating
+                }
+            },
+            Tickets = (b.Tickets ?? Enumerable.Empty<Ticket>()).Select(t => new UserTicketDTO
+            {
+                TicketId = t.Id,
+                TotalPrice = t.TotalPrice,
+                PersonTypeName = t.PersonType?.Name ?? string.Empty,
+                Seat = new UserSeatDTO
+                {
+                    SeatId = t.Seat?.Id ?? 0,
+                    Row = int.TryParse(t.Seat?.Row, out var r) ? r : 0,
+                    Number = t.Seat?.Number ?? 0,
+                    SeatTypeName = t.Seat?.SeatType?.Name ?? string.Empty
+                }
+            }).ToList()
+        }).ToList();
     }
 
     public Booking Add(Booking booking)

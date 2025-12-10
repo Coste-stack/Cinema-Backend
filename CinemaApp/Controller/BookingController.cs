@@ -33,6 +33,18 @@ namespace CinemaApp.Controller
             return _service.GetById(id);
         }
 
+        [HttpGet("my-bookings")]
+        [Authorize]
+        public IActionResult GetMyBookings()
+        {
+            var sub = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                      ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(sub, out var userId)) return Forbid();
+
+            var bookings = _service.GetUserBookings(userId);
+            return Ok(bookings);
+        }
+
         [HttpPost("initiate")]
         [AllowAnonymous]
         public IActionResult InitiateBooking([FromBody] BookingRequestDTO request)
@@ -83,18 +95,6 @@ namespace CinemaApp.Controller
             }
 
             return Forbid();
-        }
-
-        [HttpGet("my-bookings")]
-        [Authorize]
-        public IActionResult GetMyBookings()
-        {
-            var sub = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
-                      ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(sub, out var userId)) return Forbid();
-
-            var bookings = _service.GetUserBookings(userId);
-            return Ok(bookings);
         }
     }
 }

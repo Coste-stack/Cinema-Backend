@@ -11,11 +11,11 @@ public interface IBookingService
 {
     List<Booking> GetAll();
     Booking GetById(int id);
+    List<UserBookingDTO> GetUserBookings(int userId);
     Booking Create(BookingCreateDto dto);
     Booking InitiateBooking(BookingRequestDTO request, int? authUserId = null);
     void ConfirmBooking(int id);
     void CancelBooking(int id);
-    List<Booking> GetUserBookings(int userId);
     void UpdatePaymentInfo(int bookingId, string payUOrderId, decimal amount);
     void ConfirmPayment(string payUOrderId);
 }
@@ -50,6 +50,11 @@ public class BookingService(
         if (booking == null)
             throw new NotFoundException($"Booking with ID {id} not found.");
         return booking;
+    }
+
+    public List<UserBookingDTO> GetUserBookings(int userId)
+    {
+        return _bookingRepo.GetByUserId(userId);
     }
 
     public Booking Create(BookingCreateDto dto)
@@ -227,11 +232,6 @@ public class BookingService(
 
         existing.BookingStatus = BookingStatus.Cancelled;
         _bookingRepo.Update(existing);
-    }
-
-    public List<Booking> GetUserBookings(int userId)
-    {
-        return _bookingRepo.GetByUserId(userId);
     }
 
     public void UpdatePaymentInfo(int bookingId, string payUOrderId, decimal amount)
