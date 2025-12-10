@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using CinemaApp.DTO;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,21 +57,17 @@ if (isDocker)
     builder.Configuration["ConnectionStrings:PostgresDb"] = dockerConn;
 }
 
-// // Register DbContext
+// Register DbContext
 var connectionString = builder.Configuration.GetConnectionString("PostgresDb");
 services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
 
-// var connectionString = builder.Configuration.GetConnectionString("default");
-// services.AddDbContext<AppDbContext>(options =>
-//     options.UseNpgsql(connectionString));
-
 services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-    });;
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+});
 
 // Register exception handlers
 services.AddExceptionHandler<BadRequestExceptionHandler>();
@@ -120,27 +118,40 @@ var jwtIssuer = jwtSection["Issuer"] ?? "CinemaApp";
 var jwtAudience = jwtSection["Audience"] ?? "CinemaAppClients";
 var key = Encoding.UTF8.GetBytes(jwtSecret);
 
-services.AddAuthentication(options =>
+services
+.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
-    .AddJwtBearer(options =>
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(key),
-            ValidateIssuer = true,
-            ValidIssuer = jwtIssuer,
-            ValidateAudience = true,
-            ValidAudience = jwtAudience,
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
-        };
-    });
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = true,
+        ValidAudience = jwtAudience,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
 
 services.AddAuthorization();
+
+// Add PayU service
+services.Configure<PayUSettingsDTO>(builder.Configuration.GetSection("PayU"));
+services.AddHttpClient<IPayUService, PayUService>((serviceProvider, client) =>
+{
+    var settings = serviceProvider.GetRequiredService<IOptions<PayUSettingsDTO>>().Value;
+    client.BaseAddress = new Uri(settings.BaseUrl);
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    AllowAutoRedirect = false
+});
 
 // Register background services
 services.AddHostedService<BookingExpiryBackgroundService>();

@@ -16,29 +16,22 @@ public interface IBookingService
     void ConfirmBooking(int id);
     void CancelBooking(int id);
     List<Booking> GetUserBookings(int userId);
+    void UpdatePaymentInfo(int bookingId, string payUOrderId, decimal amount);
+    void ConfirmPayment(string payUOrderId);
 }
 
-public class BookingService : IBookingService
+public class BookingService(
+    IBookingRepository bookingRepo,
+    ITicketRepository ticketRepo,
+    IPriceCalculationService priceService,
+    IUserService userService,
+    ILookupService<PersonType> personTypeService) : IBookingService
 {
-    private readonly IBookingRepository _bookingRepo;
-    private readonly ITicketRepository _ticketRepo;
-    private readonly IPriceCalculationService _priceService;
-    private readonly IUserService _userService;
-    private readonly ILookupService<PersonType> _personTypeService;
-
-    public BookingService(
-        IBookingRepository bookingRepo, 
-        ITicketRepository ticketRepo,
-        IPriceCalculationService priceService,
-        IUserService userService,
-        ILookupService<PersonType> personTypeService)
-    {
-        _bookingRepo = bookingRepo;
-        _ticketRepo = ticketRepo;
-        _priceService = priceService;
-        _userService = userService;
-        _personTypeService = personTypeService;
-    }
+    private readonly IBookingRepository _bookingRepo = bookingRepo;
+    private readonly ITicketRepository _ticketRepo = ticketRepo;
+    private readonly IPriceCalculationService _priceService = priceService;
+    private readonly IUserService _userService = userService;
+    private readonly ILookupService<PersonType> _personTypeService = personTypeService;
 
     private static bool IsBookingExpired(Booking booking)
     {
@@ -134,6 +127,10 @@ public class BookingService : IBookingService
         int resolvedUserId = 0;
         if (authUserId != null && authUserId > 0)
         {
+            // Verify authenticated user exists
+            var authUser = _userService.Get(authUserId.Value);
+            if (authUser == null)
+                throw new BadRequestException($"Authenticated user with ID {authUserId.Value} not found.");
             resolvedUserId = authUserId.Value;
         }
         else if (!string.IsNullOrWhiteSpace(request.Email))
@@ -149,12 +146,20 @@ public class BookingService : IBookingService
                 // Create a guest user record (no password)
                 var newUser = _userService.Add(new UserCreateDTO { Email = request.Email });
                 resolvedUserId = newUser.Id;
+                
+                // Verify the user was created successfully
+                if (resolvedUserId == 0)
+                    throw new ConflictException("Failed to create guest user.");
             }
         }
         else
         {
             throw new BadRequestException("Either authentication or email is required to create a booking.");
         }
+
+        // Final validation that we have a valid user ID
+        if (resolvedUserId <= 0)
+            throw new BadRequestException("Invalid user ID for booking.");
 
         // Build booking with Pending status to reserve seats
         Booking booking = new Booking
@@ -227,5 +232,39 @@ public class BookingService : IBookingService
     public List<Booking> GetUserBookings(int userId)
     {
         return _bookingRepo.GetByUserId(userId);
+    }
+
+    public void UpdatePaymentInfo(int bookingId, string payUOrderId, decimal amount)
+    {
+        var booking = _bookingRepo.GetById(bookingId);
+        if (booking == null)
+            throw new NotFoundException($"Booking with ID {bookingId} not found.");
+
+        booking.PayUOrderId = payUOrderId;
+        booking.PaymentAmount = amount;
+        _bookingRepo.Update(booking);
+    }
+
+    public void ConfirmPayment(string payUOrderId)
+    {
+        var bookings = _bookingRepo.GetAll();
+        var booking = bookings.FirstOrDefault(b => b.PayUOrderId == payUOrderId);
+        
+        if (booking == null)
+            throw new NotFoundException($"Booking with PayU Order ID {payUOrderId} not found.");
+
+        if (booking.BookingStatus == BookingStatus.Confirmed)
+            return; // Already confirmed
+
+        if (IsBookingExpired(booking))
+        {
+            booking.BookingStatus = BookingStatus.Cancelled;
+            _bookingRepo.Update(booking);
+            throw new ConflictException($"Booking {booking.Id} has expired and cannot be confirmed.");
+        }
+
+        booking.BookingStatus = BookingStatus.Confirmed;
+        booking.PaymentDate = DateTime.UtcNow;
+        _bookingRepo.Update(booking);
     }
 }

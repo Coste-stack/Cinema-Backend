@@ -15,7 +15,13 @@ public class Booking : EntityBase
     public int ScreeningId { get; set; }
     public Screening? Screening { get; set; }
 
-    public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>(); 
+    public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
+    
+    // Payment tracking
+    public string? PayUOrderId { get; set; }
+    public string? PaymentTransactionId { get; set; }
+    public decimal? PaymentAmount { get; set; }
+    public DateTime? PaymentDate { get; set; }
 }
 
 public enum BookingStatus

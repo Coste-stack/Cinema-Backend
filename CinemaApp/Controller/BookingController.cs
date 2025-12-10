@@ -52,7 +52,7 @@ namespace CinemaApp.Controller
             }
 
             var booking = _service.InitiateBooking(request, authUserId);
-            return CreatedAtAction(nameof(GetById), new { id = booking.Id }, booking);
+            return CreatedAtAction(nameof(GetById), new { id = booking.Id }, booking.Id);
         }
 
         [HttpPost("{id:int}/confirm")]
