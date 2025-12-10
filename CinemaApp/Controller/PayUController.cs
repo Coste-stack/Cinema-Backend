@@ -2,6 +2,7 @@ using CinemaApp.DTO;
 using CinemaApp.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using System;
 using System.Text.Json;
 
 namespace CinemaApp.Controller
@@ -42,7 +43,8 @@ namespace CinemaApp.Controller
                     CurrencyCode = "PLN",
                     TotalAmount = amountInGrosze,
                     ContinueUrl = $"{_configuration["PayU:ContinueUrl"]}?bookingId={booking.Id}",
-                    ExtOrderId = booking.Id.ToString(),
+                    // Use booking id prefixed by a high-resolution timestamp to make ExtOrderId non-deterministic
+                    ExtOrderId = $"{booking.Id}-{DateTime.UtcNow.Ticks}",
                     Buyer = new PayUBuyer
                     {
                         Email = booking.User?.Email ?? "guest@cinema.app",
@@ -131,17 +133,24 @@ namespace CinemaApp.Controller
                 else if (order.Status == "CANCELED")
                 {
                     _logger.LogInformation("Payment canceled for OrderId: {OrderId}", order.OrderId);
-                    // Optionally cancel the booking
-                    if (int.TryParse(order.ExtOrderId, out var bookingId))
+
+                    // Extract bookingId string "{bookingId}-{ticks}"
+                    var ext = order.ExtOrderId ?? string.Empty;
+                    var dashIndex = ext.IndexOf('-');
+                    var prefix = dashIndex > 0 ? ext.Substring(0, dashIndex) : ext;
+                    int bookingId = 0;
+                    try
                     {
-                        try
+                        if (int.TryParse(prefix, out bookingId))
                         {
                             _bookingService.CancelBooking(bookingId);
+                        } else {
+                            throw new Exception($"Failed to parse bookingId from string: {order.ExtOrderId}");
                         }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Failed to cancel booking {BookingId}", bookingId);
-                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to cancel booking {BookingId}", bookingId);
                     }
                 }
 
