@@ -14,6 +14,7 @@ public interface IUserService
     void InvalidateRefreshToken(int userId, string token);
     User Add(UserCreateDTO dto);
     void Update(int id, UserCreateDTO dto);
+    void UpdatePassword(int id, string password);
 }
 
 public class UserService : IUserService
@@ -108,6 +109,21 @@ public class UserService : IUserService
         if (!string.IsNullOrEmpty(dto.Password))
         {
             existingUser.PasswordHash = _passwordHasher.HashPassword(existingUser, dto.Password);
+            existingUser.UserType = UserType.Registered;
+        }
+
+        _repository.Update(existingUser);
+    }
+
+    public void UpdatePassword(int id, string password)
+    {
+        var existingUser = _repository.GetById(id);
+        if (existingUser == null) throw new NotFoundException("User not found.");
+        
+        // Replace password
+        if (!string.IsNullOrEmpty(password))
+        {
+            existingUser.PasswordHash = _passwordHasher.HashPassword(existingUser, password);
             existingUser.UserType = UserType.Registered;
         }
 
