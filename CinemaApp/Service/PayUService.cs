@@ -195,34 +195,4 @@ public class PayUService : IPayUService
         var hash = MD5.HashData(bytes);
         return BitConverter.ToString(hash).Replace("-", "").ToLower();
     }
-
-    private static string? ExtractOrderIdFromUrl(string url)
-    {
-        try
-        {
-            var uri = new Uri(url);
-            
-            // Try query string first (e.g., ?token=XXX)
-            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-            var token = query["token"];
-            if (!string.IsNullOrEmpty(token))
-                return token;
-
-            // Try path segments (e.g., /pay/XXX or /summary/XXX)
-            var segments = uri.Segments;
-            if (segments.Length > 0)
-            {
-                var lastSegment = segments[^1].TrimEnd('/');
-                // PayU uses token as orderId in URLs
-                if (lastSegment.Length > 10) // Reasonable length for a token
-                    return lastSegment;
-            }
-
-            return null;
-        }
-        catch
-        {
-            return null;
-        }
-    }
 }

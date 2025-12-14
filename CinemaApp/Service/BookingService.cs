@@ -12,7 +12,6 @@ public interface IBookingService
     List<Booking> GetAll();
     Booking GetById(int id);
     List<UserBookingDTO> GetUserBookings(int userId);
-    Booking Create(BookingCreateDto dto);
     Booking InitiateBooking(BookingRequestDTO request, int? authUserId = null);
     void ConfirmBooking(int id);
     void CancelBooking(int id);
@@ -55,59 +54,6 @@ public class BookingService(
     public List<UserBookingDTO> GetUserBookings(int userId)
     {
         return _bookingRepo.GetByUserId(userId);
-    }
-
-    public Booking Create(BookingCreateDto dto)
-    {
-        if (dto == null)
-            throw new BadRequestException("Booking data is required.");
-            
-        if (dto.Tickets == null || dto.Tickets.Count == 0)
-            throw new BadRequestException("At least one ticket is required.");
-
-        // Validate seats and availability for the screening
-        foreach (TicketCreateDto t in dto.Tickets)
-        {
-            if (!_ticketRepo.SeatExists(t.SeatId))
-                throw new BadRequestException($"Seat {t.SeatId} does not exist.");
-
-            if (_ticketRepo.IsSeatTaken(t.SeatId, dto.ScreeningId))
-                throw new ConflictException($"Seat {t.SeatId} is already taken for screening {dto.ScreeningId}.");
-        }
-
-        // Build aggregate
-        Booking booking = new Booking
-        {
-            ScreeningId = dto.ScreeningId,
-            BookingTime = dto.BookingTime,
-            BookingStatus = BookingStatus.Confirmed
-        };
-
-        // Create tickets and attach booking id
-        foreach (TicketCreateDto t in dto.Tickets)
-        {
-            // Resolve PersonType by name
-            var personType = _personTypeService.GetByName(t.PersonTypeName);
-            if (personType == null)
-                throw new BadRequestException($"PersonType '{t.PersonTypeName}' not found.");
-
-            // Use the centralized price calculation service
-            decimal totalPrice = _priceService.CalculateTicketPrice(
-                dto.ScreeningId, 
-                t.SeatId, 
-                t.PersonTypeName);
-
-            Ticket ticket = new Ticket
-            {
-                BookingId = booking.Id,
-                SeatId = t.SeatId,
-                PersonTypeId = personType.Id,
-                TotalPrice = totalPrice
-            };
-            booking.Tickets.Add(ticket);
-        }
-
-        return _bookingRepo.Add(booking);
     }
 
     public Booking InitiateBooking(BookingRequestDTO request, int? authUserId = null)
