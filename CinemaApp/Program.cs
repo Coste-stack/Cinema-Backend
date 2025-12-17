@@ -99,8 +99,11 @@ services.AddScoped<ISeatService, SeatService>();
 services.AddScoped<IMovieService, MovieService>();
 services.AddScoped<IScreeningService, ScreeningService>();
 services.AddScoped<IBookingService, BookingService>();
-services.AddScoped<IUserService, UserService>();
+services.AddScoped<IPriceService, PriceService>();
 services.AddScoped<IPriceCalculationService, PriceCalculationService>();
+services.AddScoped<IOfferService, OfferService>();
+services.AddScoped<IOfferRepository, OfferRepository>();
+services.AddScoped<IUserService, UserService>();
 services.AddScoped<IStatisticsService, StatisticsService>();
 
 services.AddScoped<ILookupService<ProjectionType>, LookupService<ProjectionType>>();

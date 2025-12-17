@@ -24,13 +24,15 @@ public class BookingService(
     ITicketRepository ticketRepo,
     IPriceCalculationService priceService,
     IUserService userService,
-    ILookupService<PersonType> personTypeService) : IBookingService
+    ILookupService<PersonType> personTypeService,
+    IOfferService offerService) : IBookingService
 {
     private readonly IBookingRepository _bookingRepo = bookingRepo;
     private readonly ITicketRepository _ticketRepo = ticketRepo;
     private readonly IPriceCalculationService _priceService = priceService;
     private readonly IUserService _userService = userService;
     private readonly ILookupService<PersonType> _personTypeService = personTypeService;
+    private readonly IOfferService _offerService = offerService;
 
     private static bool IsBookingExpired(Booking booking)
     {
@@ -143,7 +145,25 @@ public class BookingService(
             booking.Tickets.Add(ticket);
         }
 
-        return _bookingRepo.Add(booking);
+        var saved = _bookingRepo.Add(booking);
+
+        try
+        {
+            // Build ticket price requests to evaluate offers for this booking
+            var ticketRequests = request.Tickets.Select(t => new TicketPriceRequestDTO
+            {
+                SeatId = t.SeatId,
+                PersonTypeName = t.PersonTypeName
+            }).ToList();
+
+            _offerService.ApplyOffersToBooking(saved.Id, saved.ScreeningId, ticketRequests);
+        }
+        catch
+        {
+            
+        }
+
+        return saved;
     }
 
     public void ConfirmBooking(int id)

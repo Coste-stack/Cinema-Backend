@@ -28,8 +28,12 @@ public class PriceControllerTests
         var bookingRepo = new BookingRepository(context);
         var screeningRepo = new ScreeningRepository(context);
         var personTypeRepo = new LookupRepository<PersonType>(context);
+        var offerRepository = new OfferRepository(context);
+        var movieRepository = new MovieRepository(context);
         var personTypeService = new LookupService<PersonType>(personTypeRepo);
-        var priceService = new PriceCalculationService(bookingRepo, screeningRepo, personTypeService);
+        var priceCalcService = new PriceCalculationService(bookingRepo, screeningRepo, personTypeService);
+        var offerService = new OfferService(offerRepository, screeningRepo, movieRepository, priceCalcService);
+        var priceService = new PriceService(priceCalcService, offerService);
         
         return new PriceController(priceService);
     }
@@ -83,7 +87,7 @@ public class PriceControllerTests
     {
         var controller = CreateControllerWithSeededData(out int screeningId, out int seatId1, out int seatId2);
 
-        var request = new TicketBulkPriceRequestDTO
+        var request = new BookingPriceRequestDTO
         {
             ScreeningId = screeningId,
             Tickets = new List<TicketPriceRequestDTO>
@@ -97,7 +101,7 @@ public class PriceControllerTests
         var result = controller.CalculateBulkPrice(request);
 
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var response = Assert.IsType<TicketBulkPriceResponseDTO>(okResult.Value);
+        var response = Assert.IsType<BookingPriceResponseDTO>(okResult.Value);
         
         Assert.Equal(screeningId, response.ScreeningId);
         Assert.Equal(3, response.TicketPrices.Count);
@@ -114,7 +118,7 @@ public class PriceControllerTests
 
         controller.ModelState.AddModelError("request", "Invalid request");
         
-        var request = new TicketBulkPriceRequestDTO
+        var request = new BookingPriceRequestDTO
         {
             ScreeningId = screeningId,
             Tickets = new List<TicketPriceRequestDTO>()

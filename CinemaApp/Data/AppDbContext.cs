@@ -19,6 +19,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<SeatType> SeatTypes { get; set; }
     public DbSet<PersonType> PersonTypes { get; set; }
     public DbSet<Genre> Genres { get; set; }
+    public DbSet<Offer> Offers { get; set; }
+    public DbSet<OfferCondition> OfferConditions { get; set; }
+    public DbSet<OfferEffect> OfferEffects { get; set; }
+    public DbSet<AppliedOffer> AppliedOffers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -165,6 +169,45 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .Property(p => p.PricePercentDiscount)
                 .HasPrecision(5,2)
                 .HasDefaultValue(0m);
+
+        // Offer tables
+        modelBuilder.Entity<Offer>(o =>
+        {
+            o.Property(p => p.IsActive).HasDefaultValue(true);
+            o.Property(p => p.IsStackable).HasDefaultValue(true);
+            o.Property(p => p.Priority).HasDefaultValue(0);
+        });
+
+        modelBuilder.Entity<Offer>()
+            .HasMany(o => o.Conditions)
+            .WithOne(c => c.Offer)
+            .HasForeignKey(c => c.OfferId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Offer>()
+            .HasMany(o => o.Effects)
+            .WithOne(e => e.Offer)
+            .HasForeignKey(e => e.OfferId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Offer>()
+            .HasMany(o => o.AppliedOffers)
+            .WithOne(a => a.Offer)
+            .HasForeignKey(a => a.OfferId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<AppliedOffer>()
+            .HasOne(a => a.Booking)
+            .WithMany()
+            .HasForeignKey(a => a.BookingId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("FK_AppliedOffers_Bookings");
+
+        modelBuilder.Entity<OfferEffect>()
+            .Property(e => e.EffectValue).HasPrecision(5,2);
+
+        modelBuilder.Entity<AppliedOffer>()
+            .Property(a => a.DiscountAmount).HasPrecision(5,2);
 
         base.OnModelCreating(modelBuilder);
     }

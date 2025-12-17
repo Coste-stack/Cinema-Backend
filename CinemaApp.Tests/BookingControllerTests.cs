@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace CinemaApp.Tests;
@@ -29,13 +30,16 @@ public class BookingControllerTests
         var bookingRepo = new BookingRepository(context);
         var screeningRepo = new ScreeningRepository(context);
         var ticketRepo = new TicketRepository(context);
+        var offerRepository = new OfferRepository(context);
+        var movieRepository = new MovieRepository(context);
         var personTypeRepo = new LookupRepository<PersonType>(context);
         var personTypeService = new LookupService<PersonType>(personTypeRepo);
-        var priceService = new PriceCalculationService(bookingRepo, screeningRepo, personTypeService);
+        var priceCalcService = new PriceCalculationService(bookingRepo, screeningRepo, personTypeService);
         var userRepo = new UserRepository(context);
         var passwordHasher = new Microsoft.AspNetCore.Identity.PasswordHasher<User>();
         var userService = new UserService(userRepo, passwordHasher);
-        var bookingService = new BookingService(bookingRepo, ticketRepo, priceService, userService, personTypeService);
+        var offerService = new OfferService(offerRepository, screeningRepo, movieRepository, priceCalcService);
+        var bookingService = new BookingService(bookingRepo, ticketRepo, priceCalcService, userService, personTypeService, offerService);
 
         return new BookingController(bookingService, userService);
     }
@@ -72,7 +76,11 @@ public class BookingControllerTests
         var result = controller.InitiateBooking(request);
 
         var createdResult = Assert.IsType<CreatedAtActionResult>(result);
-        var booking = Assert.IsType<Booking>(createdResult.Value);
+        var bookingId = Assert.IsType<int>(createdResult.Value);
+        var booking = context.Bookings
+            .Include(b => b.Tickets)
+            .ThenInclude(t => t.PersonType)
+            .First(b => b.Id == bookingId);
         Assert.Equal(BookingStatus.Pending, booking.BookingStatus);
         Assert.Equal(screening.Id, booking.ScreeningId);
         Assert.Equal(user.Id, booking.UserId);
@@ -101,10 +109,14 @@ public class BookingControllerTests
         var result = controller.InitiateBooking(request);
 
         var createdResult = Assert.IsType<CreatedAtActionResult>(result);
-        var booking = Assert.IsType<Booking>(createdResult.Value);
-        
+        var bookingId = Assert.IsType<int>(createdResult.Value);
+        var bookingEntity = context.Bookings
+            .Include(b => b.Tickets)
+            .ThenInclude(t => t.PersonType)
+            .First(b => b.Id == bookingId);
+
         // Adult: 12.00, Child: 8.40 (30% discount)
-        var totalPrice = booking.Tickets.Sum(t => t.TotalPrice);
+        var totalPrice = bookingEntity.Tickets.Sum(t => t.TotalPrice);
         Assert.Equal(20.40m, totalPrice);
     }
 
@@ -162,13 +174,13 @@ public class BookingControllerTests
 
         var createResult = controller.InitiateBooking(request);
         var createdResult = Assert.IsType<CreatedAtActionResult>(createResult);
-        var booking = Assert.IsType<Booking>(createdResult.Value);
+        var bookingId = Assert.IsType<int>(createdResult.Value);
 
-        var confirmResult = controller.ConfirmBooking(booking.Id, new BookingActionDTO { Email = user.Email });
+        var confirmResult = controller.ConfirmBooking(bookingId, new BookingActionDTO { Email = user.Email });
 
         Assert.IsType<NoContentResult>(confirmResult);
 
-        var confirmed = controller.GetById(booking.Id).Value;
+        var confirmed = context.Bookings.Find(bookingId);
         Assert.Equal(BookingStatus.Confirmed, confirmed!.BookingStatus);
     }
 
@@ -192,13 +204,13 @@ public class BookingControllerTests
 
         var createResult = controller.InitiateBooking(request);
         var createdResult = Assert.IsType<CreatedAtActionResult>(createResult);
-        var booking = Assert.IsType<Booking>(createdResult.Value);
+        var bookingId = Assert.IsType<int>(createdResult.Value);
 
-        var cancelResult = controller.CancelBooking(booking.Id, new BookingActionDTO { Email = user.Email });
+        var cancelResult = controller.CancelBooking(bookingId, new BookingActionDTO { Email = user.Email });
 
         Assert.IsType<NoContentResult>(cancelResult);
 
-        var cancelled = controller.GetById(booking.Id).Value;
+        var cancelled = context.Bookings.Find(bookingId);
         Assert.Equal(BookingStatus.Cancelled, cancelled!.BookingStatus);
     }
 
@@ -221,12 +233,12 @@ public class BookingControllerTests
             }
         };
         var createResult1 = controller.InitiateBooking(request1);
-        var booking1 = Assert.IsType<Booking>(((CreatedAtActionResult)createResult1).Value);
+        var createdResult1 = Assert.IsType<CreatedAtActionResult>(createResult1);
+        var booking1Id = Assert.IsType<int>(createdResult1.Value);
 
         // Cancel it
-        controller.CancelBooking(booking1.Id, new BookingActionDTO { Email = user.Email });
+        controller.CancelBooking(booking1Id, new BookingActionDTO { Email = user.Email });
 
-        // Book the same seat again - should succeed
         var request2 = new BookingRequestDTO
         {
             ScreeningId = screening.Id,
@@ -297,12 +309,13 @@ public class BookingControllerTests
         };
 
         var createResult = controller.InitiateBooking(request);
-        var booking = Assert.IsType<Booking>(((CreatedAtActionResult)createResult).Value);
+        var bookingId = Assert.IsType<int>(((CreatedAtActionResult)createResult).Value);
 
-        var result = controller.GetById(booking.Id);
+        var result = controller.GetById(bookingId);
 
-        var returnedBooking = Assert.IsType<Booking>(result.Value);
-        Assert.Equal(booking.Id, returnedBooking.Id);
+        var returnedBooking = context.Bookings.Find(bookingId);
+        Assert.NotNull(returnedBooking);
+        Assert.Equal(bookingId, returnedBooking!.Id);
     }
 
     [Fact]
@@ -336,12 +349,16 @@ public class BookingControllerTests
         var result = controller.InitiateBooking(request);
 
         var createdResult = Assert.IsType<CreatedAtActionResult>(result);
-        var booking = Assert.IsType<Booking>(createdResult.Value);
-        
+        var bookingId = Assert.IsType<int>(createdResult.Value);
+        var bookingEntity = context.Bookings
+            .Include(b => b.Tickets)
+            .ThenInclude(t => t.PersonType)
+            .First(b => b.Id == bookingId);
+
         // Regular Adult: 12.00, Regular Child: 8.40, VIP Adult: 17.00
-        var totalPrice = booking.Tickets.Sum(t => t.TotalPrice);
+        var totalPrice = bookingEntity.Tickets.Sum(t => t.TotalPrice);
         Assert.Equal(37.40m, totalPrice);
-        Assert.Equal(3, booking.Tickets.Count);
+        Assert.Equal(3, bookingEntity.Tickets.Count);
     }
 
     [Fact]
@@ -364,19 +381,19 @@ public class BookingControllerTests
 
         var createResult = controller.InitiateBooking(request);
         var createdResult = Assert.IsType<CreatedAtActionResult>(createResult);
-        var booking = Assert.IsType<Booking>(createdResult.Value);
+        var bookingId = Assert.IsType<int>(createdResult.Value);
 
         // Simulate expiry by setting BookingTime to 20 minutes ago
-        var existingBooking = context.Bookings.Find(booking.Id);
+        var existingBooking = context.Bookings.Find(bookingId);
         existingBooking!.BookingTime = DateTime.UtcNow.AddMinutes(-20);
         context.SaveChanges();
 
         // Attempt to confirm expired booking
-        var exception = Assert.Throws<ConflictException>(() => controller.ConfirmBooking(booking.Id, new BookingActionDTO { Email = user.Email }));
+        var exception = Assert.Throws<ConflictException>(() => controller.ConfirmBooking(bookingId, new BookingActionDTO { Email = user.Email }));
         Assert.Contains("expired", exception.Message.ToLower());
 
         // Verify booking was cancelled
-        var cancelledBooking = controller.GetById(booking.Id).Value;
+        var cancelledBooking = context.Bookings.Find(bookingId);
         Assert.Equal(BookingStatus.Cancelled, cancelledBooking!.BookingStatus);
     }
 
@@ -401,10 +418,10 @@ public class BookingControllerTests
 
         var createResult = controller.InitiateBooking(request1);
         var createdResult = Assert.IsType<CreatedAtActionResult>(createResult);
-        var booking = Assert.IsType<Booking>(createdResult.Value);
+        var booking1Id = Assert.IsType<int>(createdResult.Value);
 
         // Simulate expiry by setting BookingTime to 20 minutes ago
-        var existingBooking = context.Bookings.Find(booking.Id);
+        var existingBooking = context.Bookings.Find(booking1Id);
         existingBooking!.BookingTime = DateTime.UtcNow.AddMinutes(-20);
         context.SaveChanges();
 
@@ -423,7 +440,7 @@ public class BookingControllerTests
 
         // Should succeed because the first booking expired
         var createdResult2 = Assert.IsType<CreatedAtActionResult>(result2);
-        var booking2 = Assert.IsType<Booking>(createdResult2.Value);
-        Assert.NotEqual(booking.Id, booking2.Id);
+        var booking2Id = Assert.IsType<int>(createdResult2.Value);
+        Assert.NotEqual(booking1Id, booking2Id);
     }
 }

@@ -100,6 +100,8 @@ public static class SeedData
         
         // Seed Bookings and Tickets so statistics have real data
         await SeedBookingsAndTicketsAsync(context, logger);
+
+        await SeedOffersAsync(context, logger);
     }
 
     private static async Task<List<Cinema>> SeedCinemasAsync(AppDbContext context, ILogger logger)
@@ -509,5 +511,95 @@ public static class SeedData
                 await context.SaveChangesAsync();
             }
         }
+    }
+
+    public static async Task SeedOffersAsync(AppDbContext context, ILogger logger)
+    {
+        var offerList = new List<Offer>
+        {
+            new Offer
+            {
+                Name = "Monday Deal",
+                Description = "For all tickets on Monday",
+                Priority = 200,
+                IsStackable = false,
+                ValidFrom = DateTime.Now,
+                ValidTo = DateTime.Now.AddDays(10),
+                Conditions =
+                {
+                    new OfferCondition
+                    {
+                        ConditionType = "DayOfWeek",
+                        ConditionValue = "Monday"
+                    }
+                },
+                Effects =
+                {
+                    new OfferEffect
+                    {
+                        EffectType = "PercentageDiscount",
+                        EffectValue = 20m
+                    }
+                }
+            },
+            new Offer
+            {
+                Name = "Weekend Special",
+                Description = "Applies on Saturday and Sunday",
+                Priority = 180,
+                IsStackable = false,
+                ValidFrom = DateTime.Now,
+                ValidTo = DateTime.Now.AddDays(20),
+                Conditions =
+                {
+                    new OfferCondition
+                    {
+                        ConditionType = "DayOfWeek",
+                        ConditionValue = "Saturday"
+                    },
+                    new OfferCondition
+                    {
+                        ConditionType = "DayOfWeek",
+                        ConditionValue = "Sunday"
+                    }
+                },
+                Effects =
+                {
+                    new OfferEffect
+                    {
+                        EffectType = "PercentageDiscount",
+                        EffectValue = 15m
+                    }
+                }
+            },
+            new Offer
+            {
+                Name = "Family Pack",
+                Description = "When buying 4 or more tickets",
+                Priority = 100,
+                IsStackable = false,
+                ValidFrom = DateTime.Now,
+                ValidTo = DateTime.Now.AddDays(10),
+                Conditions =
+                {
+                    new OfferCondition
+                    {
+                        ConditionType = "MinimumTicketCount",
+                        ConditionValue = "4"
+                    }
+                },
+                Effects =
+                {
+                    new OfferEffect
+                    {
+                        EffectType = "FixedDiscount",
+                        EffectValue = 10m
+                    }
+                }
+            }
+        };
+
+        context.Offers.AddRange(offerList);
+        await context.SaveChangesAsync();
     }
 }

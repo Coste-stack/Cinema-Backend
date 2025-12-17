@@ -8,30 +8,30 @@ namespace CinemaApp.Controller;
 [Route("[controller]")]
 public class PriceController : ControllerBase
 {
-    private readonly IPriceCalculationService _priceService;
+    private readonly IPriceService _priceService;
 
-    public PriceController(IPriceCalculationService priceService)
+    public PriceController(IPriceService priceService)
     {
         _priceService = priceService;
     }
 
-    [HttpGet("calculate")]
+    [HttpGet("ticket")]
     public ActionResult<object> CalculatePrice(
         [FromQuery] int screeningId,
         [FromQuery] int seatId,
         [FromQuery] string personTypeName)
     {
-        decimal price = _priceService.CalculateTicketPrice(screeningId, seatId, personTypeName);
+        decimal price = _priceService.GetTicketPrice(screeningId, seatId, personTypeName);
         return Ok(new { price });
     }
 
-    [HttpPost("calculate-bulk")]
-    public ActionResult<TicketBulkPriceResponseDTO> CalculateBulkPrice([FromBody] TicketBulkPriceRequestDTO request)
+    [HttpPost("booking")]
+    public ActionResult<BookingPriceResponseDTO> CalculateBulkPrice([FromBody] BookingPriceRequestDTO request)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var result = _priceService.CalculateBulkTicketPrices(request.ScreeningId, request.Tickets);
+        var result = _priceService.GetBookingPrices(request.BookingId, request.ScreeningId, request.Tickets);
         return Ok(result);
     }
 }
