@@ -108,7 +108,7 @@ public class PriceControllerTests
         Assert.Equal(12.00m, response.TicketPrices[0].Price);
         Assert.Equal(11.90m, response.TicketPrices[1].Price);
         Assert.Equal(8.40m, response.TicketPrices[2].Price);
-        Assert.Equal(32.30m, response.TotalPrice);
+        Assert.Equal(32.30m, response.BasePrice);
     }
 
     [Fact]

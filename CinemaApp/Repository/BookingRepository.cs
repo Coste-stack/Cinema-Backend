@@ -14,6 +14,7 @@ public interface IBookingRepository
     List<UserBookingDTO> GetByUserId(int userId);
     Booking Add(Booking booking);
     Booking Update(Booking booking);
+    Booking UpdateBookingDiscountedPrice(int bookingId);
     
     decimal GetMoviePrice(Booking booking);
     decimal GetSeatPrice(int seatId);
@@ -35,13 +36,15 @@ public class BookingRepository : IBookingRepository
 
     public Booking? GetById(int id)
     {
-        // Include tickets
-        return _context.Bookings
+        // Include tickets and dicount offers
+        IQueryable<Booking> q = _context.Bookings
             .Include(b => b.Tickets)
                 .ThenInclude(t => t.Seat)
             .Include(b => b.Tickets)
                 .ThenInclude(t => t.PersonType)
-            .FirstOrDefault(b => b.Id == id);
+            .Include(b => b.AppliedOffers);
+        
+        return q.FirstOrDefault(b => b.Id == id);
     }
 
     public List<UserBookingDTO> GetByUserId(int userId)
@@ -56,6 +59,7 @@ public class BookingRepository : IBookingRepository
                 .ThenInclude(s => s!.ProjectionType)
             .Include(b => b.Screening)
                 .ThenInclude(s => s!.Movie)
+            .Include(b => b.AppliedOffers)
             .Where(b => b.UserId == userId)
             .AsNoTracking()
             .ToList();
@@ -94,6 +98,43 @@ public class BookingRepository : IBookingRepository
                 }
             }).ToList()
         }).ToList();
+    }
+
+    public Booking UpdateBookingDiscountedPrice(int bookingId)
+    {
+        // Get offers linked to booking
+        var appliedOffers = _context.AppliedOffers
+            .Where(a => a.BookingId == bookingId)
+            .AsNoTracking()
+            .ToList();
+
+        // Sum discouts in offers
+        decimal discountPrice = 0;
+        foreach(var offer in appliedOffers) {
+            discountPrice += offer.DiscountAmount;
+        }
+
+        // Get booking
+        var booking = _context.Bookings
+            .FirstOrDefault(b => b.Id == bookingId);
+        if (booking == null)
+        {
+            throw new NotFoundException("No booking found to update discounted price");
+        }
+        
+        // Update booking discounted price
+        booking.DiscountedPrice = discountPrice;
+        try
+        {
+            var affected = _context.SaveChanges();
+            if (affected == 0)
+                throw new ConflictException("No rows affected when updating discounted price.");
+            return booking;
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new ConflictException("Database update failed when updating discounted price.", ex);
+        }
     }
 
     public Booking Add(Booking booking)

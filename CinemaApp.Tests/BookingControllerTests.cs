@@ -40,8 +40,9 @@ public class BookingControllerTests
         var userService = new UserService(userRepo, passwordHasher);
         var offerService = new OfferService(offerRepository, screeningRepo, movieRepository, priceCalcService);
         var bookingService = new BookingService(bookingRepo, ticketRepo, priceCalcService, userService, personTypeService, offerService);
+        var priceService = new PriceService(priceCalcService, offerService);
 
-        return new BookingController(bookingService, userService);
+        return new BookingController(bookingService, userService, priceService);
     }
 
     [Fact]

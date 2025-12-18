@@ -188,7 +188,7 @@ public class OfferService(IOfferRepository repo, IScreeningRepository screeningR
             };
 
             var bookingPriceResponse = _priceService.CalculateBookingPrice(bookingRequest);
-            var bookingPrice = bookingPriceResponse.TotalPrice;
+            var bookingPrice = bookingPriceResponse.BasePrice;
             var discount = CalculateDiscountAmount(offer, bookingPrice);
             if (discount <= 0m) continue;
 

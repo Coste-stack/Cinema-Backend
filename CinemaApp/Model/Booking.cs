@@ -15,7 +15,12 @@ public class Booking : EntityBase
     public int ScreeningId { get; set; }
     public Screening? Screening { get; set; }
 
+    public decimal BasePrice { get; set; }
+    public decimal DiscountedPrice { get; set; }
+
     public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
+
+    public ICollection<AppliedOffer> AppliedOffers { get; set; } = new List<AppliedOffer>();
     
     // Payment tracking
     public string? PayUOrderId { get; set; }

@@ -198,7 +198,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<AppliedOffer>()
             .HasOne(a => a.Booking)
-            .WithMany()
+            .WithMany(b => b.AppliedOffers)
             .HasForeignKey(a => a.BookingId)
             .OnDelete(DeleteBehavior.Restrict)
             .HasConstraintName("FK_AppliedOffers_Bookings");

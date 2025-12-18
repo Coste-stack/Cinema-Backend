@@ -69,11 +69,14 @@ public class PriceCalculationService(IBookingRepository bookingRepo, IScreeningR
             totalPrice += price;
         }
 
+        totalPrice = Math.Round(totalPrice, 2);
+
         return new BookingPriceResponseDTO
         {
             ScreeningId = request.ScreeningId,
             TicketPrices = ticketPrices,
-            TotalPrice = Math.Round(totalPrice, 2)
+            BasePrice = totalPrice,
+            DiscountedPrice = totalPrice
         };
     }
 
@@ -93,6 +96,6 @@ public class PriceCalculationService(IBookingRepository bookingRepo, IScreeningR
         };
 
         BookingPriceResponseDTO response = CalculateBookingPrice(request);
-        return Math.Round(response.TotalPrice, 2);
+        return Math.Round(response.BasePrice, 2);
     }
 }

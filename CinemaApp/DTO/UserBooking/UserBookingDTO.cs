@@ -16,4 +16,12 @@ public class UserBookingDTO
     [Required]
     [JsonPropertyName("tickets")]
     public List<UserTicketDTO> Tickets { get; set; } = new();
+
+    [Required]
+    [JsonPropertyName("basePrice")]
+    public decimal BasePrice { get; set; }
+
+    [Required]
+    [JsonPropertyName("discountedPrice")]
+    public decimal DiscountedPrice { get; set; }
 }

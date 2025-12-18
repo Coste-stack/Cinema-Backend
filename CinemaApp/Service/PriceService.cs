@@ -35,8 +35,8 @@ public class PriceService(IPriceCalculationService priceCalcService, IOfferServi
         var appliedOffers = _offerService.GetAppliedOffers(screeningId, tickets, bookingId);
         var discountAmount = _offerService.SumAppliedOffers(appliedOffers);
 
-        response.TotalPrice -= discountAmount;
-        if (response.TotalPrice < 0) response.TotalPrice = 0m;
+        response.DiscountedPrice = response.BasePrice - discountAmount;
+        if (response.DiscountedPrice < 0) response.DiscountedPrice = 0m;
 
         // Map applied offers for response
         response.AppliedOffers = appliedOffers.Select(a => {

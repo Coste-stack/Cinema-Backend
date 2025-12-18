@@ -123,6 +123,8 @@ public class BookingService(
             UserId = resolvedUserId
         };
 
+        decimal bookingPrice = 0;
+
         foreach (TicketCreateDto t in request.Tickets)
         {
             // Resolve PersonType by name
@@ -134,6 +136,7 @@ public class BookingService(
                 request.ScreeningId,
                 t.SeatId,
                 t.PersonTypeName);
+            bookingPrice += totalPrice;
 
             Ticket ticket = new Ticket
             {
@@ -145,6 +148,9 @@ public class BookingService(
             booking.Tickets.Add(ticket);
         }
 
+        booking.BasePrice = bookingPrice;
+        booking.DiscountedPrice = bookingPrice;
+
         var saved = _bookingRepo.Add(booking);
 
         // Build ticket price requests to evaluate offers for this booking
@@ -155,7 +161,8 @@ public class BookingService(
         }).ToList();
 
         _offerService.ApplyOffersToBooking(saved.Id, saved.ScreeningId, ticketRequests);
-
+        saved = _bookingRepo.UpdateBookingDiscountedPrice(saved.Id);
+        
         return saved;
     }
 
