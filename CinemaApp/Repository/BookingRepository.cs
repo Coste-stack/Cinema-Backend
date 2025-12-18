@@ -67,6 +67,8 @@ public class BookingRepository : IBookingRepository
         return bookings.Select(b => new UserBookingDTO
         {
             BookingId = b.Id,
+            BasePrice = b.BasePrice,
+            DiscountedPrice = b.DiscountedPrice,
             Screening = new UserScreeningDTO
             {
                 ScreeningId = b.Screening?.Id ?? 0,
@@ -123,7 +125,7 @@ public class BookingRepository : IBookingRepository
         }
         
         // Update booking discounted price
-        booking.DiscountedPrice = discountPrice;
+        booking.DiscountedPrice = booking.BasePrice - discountPrice;
         try
         {
             var affected = _context.SaveChanges();
