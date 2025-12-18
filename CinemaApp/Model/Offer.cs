@@ -18,6 +18,7 @@ public class Offer : EntityBase
     public int Priority { get; set; }
 
     public bool IsStackable { get; set; } = true;
+    
     public ICollection<OfferCondition> Conditions { get; set; } = new List<OfferCondition>();
     public ICollection<OfferEffect> Effects { get; set; } = new List<OfferEffect>();
     public ICollection<AppliedOffer> AppliedOffers { get; set; } = new List<AppliedOffer>();

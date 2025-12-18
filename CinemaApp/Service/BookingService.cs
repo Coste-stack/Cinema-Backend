@@ -147,21 +147,14 @@ public class BookingService(
 
         var saved = _bookingRepo.Add(booking);
 
-        try
+        // Build ticket price requests to evaluate offers for this booking
+        var ticketRequests = request.Tickets.Select(t => new TicketPriceRequestDTO
         {
-            // Build ticket price requests to evaluate offers for this booking
-            var ticketRequests = request.Tickets.Select(t => new TicketPriceRequestDTO
-            {
-                SeatId = t.SeatId,
-                PersonTypeName = t.PersonTypeName
-            }).ToList();
+            SeatId = t.SeatId,
+            PersonTypeName = t.PersonTypeName
+        }).ToList();
 
-            _offerService.ApplyOffersToBooking(saved.Id, saved.ScreeningId, ticketRequests);
-        }
-        catch
-        {
-            
-        }
+        _offerService.ApplyOffersToBooking(saved.Id, saved.ScreeningId, ticketRequests);
 
         return saved;
     }

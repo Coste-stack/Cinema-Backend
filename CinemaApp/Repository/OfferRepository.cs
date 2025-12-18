@@ -8,7 +8,9 @@ namespace CinemaApp.Repository;
 
 public interface IOfferRepository
 {
-    List<Offer> GetActiveOffers();
+    List<Offer> GetAllOffers(bool includeApplied = false);
+    List<Offer> GetActiveOffers(bool includeApplied = false);
+    Offer? Get(int id, bool includeApplied = false);
     void AddAppliedOffers(IEnumerable<AppliedOffer> offers);
     List<AppliedOffer> GetAppliedOffers(int bookingId);
 }
@@ -19,14 +21,41 @@ public class OfferRepository : IOfferRepository
 
     public OfferRepository(AppDbContext context) => _context = context;
 
-    public List<Offer> GetActiveOffers()
+    public List<Offer> GetAllOffers(bool includeApplied = false)
     {
-        return _context.Offers
+        IQueryable<Offer> q = _context.Offers
+            .Include(o => o.Conditions)
+            .Include(o => o.Effects);
+
+        if (includeApplied)
+            q = q.Include(o => o.AppliedOffers);
+
+        return q.AsNoTracking().ToList();
+    }
+
+    public List<Offer> GetActiveOffers(bool includeApplied = false)
+    {
+        IQueryable<Offer> q = _context.Offers
             .Include(o => o.Conditions)
             .Include(o => o.Effects)
-            .AsNoTracking()
-            .Where(o => o.IsActive)
-            .ToList();
+            .Where(o => o.IsActive);
+
+        if (includeApplied)
+            q = q.Include(o => o.AppliedOffers);
+
+        return q.AsNoTracking().ToList();
+    }
+
+    public Offer? Get(int id, bool includeApplied = false)
+    {
+        IQueryable<Offer> q = _context.Offers
+            .Include(x => x.Conditions)
+            .Include(x => x.Effects);
+
+        if (includeApplied)
+            q = q.Include(x => x.AppliedOffers);
+
+        return q.AsNoTracking().FirstOrDefault(x => x.Id == id);
     }
 
     public void AddAppliedOffers(IEnumerable<AppliedOffer> offers)

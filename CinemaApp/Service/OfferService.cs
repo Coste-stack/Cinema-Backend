@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using CinemaApp.DTO.Ticket;
 using CinemaApp.Model;
+using CinemaApp.DTO.Offer;
 using CinemaApp.Repository;
 
 namespace CinemaApp.Service;
 
 public interface IOfferService
 {
+    List<OfferDTO> GetAllOffers(bool includeApplied = false);
+    List<OfferDTO> GetActiveOffers(bool includeApplied = false);
+    OfferDTO? GetById(int id, bool includeApplied = false);
     bool IsOfferValid(Offer offer, DateTime now);
     decimal CalculateDiscountAmount(Offer offer, decimal basePrice);
     decimal SumAppliedOffers(IEnumerable<AppliedOffer>? offers);
@@ -23,6 +27,57 @@ public class OfferService(IOfferRepository repo, IScreeningRepository screeningR
     private readonly IScreeningRepository _screeningRepo = screeningRepo;
     private readonly IMovieRepository _movieRepo = movieRepo;
     private readonly IPriceCalculationService _priceService = priceService;
+
+    public List<OfferDTO> GetAllOffers(bool includeApplied = false)
+    {
+        var offers = _repo.GetAllOffers(includeApplied);
+        return offers.Select(o => MapToDto(o, includeApplied)).ToList();
+    }
+
+    public List<OfferDTO> GetActiveOffers(bool includeApplied = false)
+    {
+        var offers = _repo.GetActiveOffers(includeApplied);
+        return offers.Select(o => MapToDto(o, includeApplied)).ToList();
+    }
+
+    public OfferDTO? GetById(int id, bool includeApplied = false)
+    {
+        var offer = _repo.Get(id, includeApplied);
+        if (offer == null) return null;
+        return MapToDto(offer, includeApplied);
+    }
+    private OfferDTO MapToDto(Offer o, bool includeApplied)
+    {
+        if (o == null) return null!;
+        return new OfferDTO
+        {
+            Id = o.Id,
+            Name = o.Name,
+            Description = o.Description,
+            IsActive = o.IsActive,
+            ValidFrom = o.ValidFrom,
+            ValidTo = o.ValidTo,
+            Priority = o.Priority,
+            IsStackable = o.IsStackable,
+            Conditions = o.Conditions?.Select(c => new OfferConditionDTO
+            {
+                ConditionType = c.ConditionType ?? string.Empty,
+                ConditionValue = c.ConditionValue ?? string.Empty
+            }).ToList() ?? new List<OfferConditionDTO>(),
+            Effects = o.Effects?.Select(e => new OfferEffectDTO
+            {
+                EffectType = e.EffectType ?? string.Empty,
+                EffectValue = e.EffectValue
+            }).ToList() ?? new List<OfferEffectDTO>(),
+            AppliedOffers = includeApplied
+                ? (o.AppliedOffers?.Select(a => new AppliedOfferDTO
+                {
+                    BookingId = a.BookingId,
+                    DiscountAmount = a.DiscountAmount
+                }).ToList() ?? new List<AppliedOfferDTO>())
+                : null
+        };
+    }
 
     public bool IsOfferValid(Offer offer, DateTime now)
     {
@@ -141,7 +196,6 @@ public class OfferService(IOfferRepository repo, IScreeningRepository screeningR
             appliedOffers.Add(new AppliedOffer
             {
                 OfferId = offer.Id,
-                Offer = offer,
                 BookingId = bookingId > 0 ? bookingId : null,
                 DiscountAmount = Math.Min(discount, bookingPrice)
             });

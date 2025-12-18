@@ -10,16 +10,11 @@ namespace CinemaApp.Controller
 {
     [ApiController]
     [Route("[controller]")]
-    public class BookingController : ControllerBase
+    public class BookingController(IBookingService service, IUserService userService, IPriceService priceService) : ControllerBase
     {
-        private readonly IBookingService _service;
-        private readonly IUserService _userService;
-
-        public BookingController(IBookingService service, IUserService userService)
-        {
-            _service = service;
-            _userService = userService;
-        }
+        private readonly IBookingService _service = service;
+        private readonly IUserService _userService = userService;
+        private readonly IPriceService _priceService = priceService;
 
         [HttpGet]
         public ActionResult<List<Booking>> GetAll()

@@ -39,11 +39,14 @@ public class PriceService(IPriceCalculationService priceCalcService, IOfferServi
         if (response.TotalPrice < 0) response.TotalPrice = 0m;
 
         // Map applied offers for response
-        response.AppliedOffers = appliedOffers.Select(a => new AppliedOfferResponseDTO
-        {
-            OfferId = a.OfferId,
-            OfferName = a.Offer?.Name,
-            DiscountAmount = a.DiscountAmount
+        response.AppliedOffers = appliedOffers.Select(a => {
+            var offerDto = _offerService.GetById(a.OfferId, false);
+            return new AppliedOfferResponseDTO
+            {
+                OfferId = a.OfferId,
+                OfferName = offerDto?.Name,
+                DiscountAmount = a.DiscountAmount
+            };
         }).ToList();
 
         return response;
