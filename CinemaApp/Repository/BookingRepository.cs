@@ -92,7 +92,7 @@ public class BookingRepository : IBookingRepository
                 Seat = new UserSeatDTO
                 {
                     SeatId = t.Seat?.Id ?? 0,
-                    Row = int.TryParse(t.Seat?.Row, out var r) ? r : 0,
+                    Row = t.Seat?.Row ?? "",
                     Number = t.Seat?.Number ?? 0,
                     SeatTypeName = t.Seat?.SeatType?.Name ?? string.Empty
                 }

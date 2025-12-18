@@ -11,7 +11,7 @@ public class UserSeatDTO
     
     [Required]
     [JsonPropertyName("row")]
-    public int Row { get; set; }
+    public string Row { get; set; } = null!;
 
     [Required]
     [JsonPropertyName("number")]
