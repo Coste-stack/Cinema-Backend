@@ -9,6 +9,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using CinemaApp.DTO;
 using Microsoft.Extensions.Options;
+using CinemaApp.DTO.Turnstile;
+using CinemaApp.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -155,6 +157,11 @@ services.AddHttpClient<IPayUService, PayUService>((serviceProvider, client) =>
 {
     AllowAutoRedirect = false
 });
+
+// Add Turnstile service
+services.AddScoped<TurnstileFilter>();
+services.Configure<TurnstileSettingsDTO>(builder.Configuration.GetSection("Turnstile"));
+services.AddHttpClient<ITurnstileService, TurnstileService>();
 
 // Register background services
 services.AddHostedService<BookingExpiryBackgroundService>();

@@ -1,11 +1,13 @@
 using CinemaApp.Controller;
 using CinemaApp.Data;
 using CinemaApp.Model;
+using CinemaApp.DTO.Turnstile;
 using CinemaApp.Repository;
 using CinemaApp.Service;
 using CinemaApp.Tests.Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 
@@ -23,17 +25,19 @@ public class AuthControllerTests
         var service = new UserService(repo, hasher);
         tokenService = new TestTokenService();
 
-        return new AuthController(service, hasher, tokenService);
+        var controller = new AuthController(service, hasher, tokenService);
+        controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
+        return controller;
     }
 
     [Fact]
-    public void Login_ReturnsToken_WhenCredentialsValid()
+    public async Task Login_ReturnsToken_WhenCredentialsValid()
     {
         var controller = CreateControllerWithSeededData(out var context, out var hasher, out var tokenService);
 
         var request = new LoginRequestDTO { Email = "reg@example.com", Password = "InitialPass1!" };
 
-        var action = controller.Login(request);
+        var action = await controller.Login(request);
 
         var ok = Assert.IsType<OkObjectResult>(action.Result);
         var dto = Assert.IsType<AuthResponseDTO>(ok.Value);
@@ -41,19 +45,19 @@ public class AuthControllerTests
     }
 
     [Fact]
-    public void Login_ReturnsUnauthorized_WhenPasswordInvalid()
+    public async Task Login_ReturnsUnauthorized_WhenPasswordInvalid()
     {
         var controller = CreateControllerWithSeededData(out var context, out var hasher, out var tokenService);
 
         var request = new LoginRequestDTO { Email = "reg@example.com", Password = "WrongPassword" };
 
-        var action = controller.Login(request);
+        var action = await controller.Login(request);
 
         Assert.IsType<UnauthorizedObjectResult>(action.Result);
     }
 
     [Fact]
-    public void Register_ReturnsCreatedAndToken_WhenNewUser()
+    public async Task Register_ReturnsCreatedAndToken_WhenNewUserAsync()
     {
         var context = TestDataSeeder.CreateTestDbContext();
         var hasher = new PasswordHasher<User>();
@@ -66,10 +70,11 @@ public class AuthControllerTests
             .Build();
 
         var controller = new AuthController(service, hasher, tokenService);
+        controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
 
         var dto = new UserCreateDTO { Email = "newuser@example.com", Password = "Secret!23" };
 
-        var action = controller.Register(dto);
+        var action = await controller.Register(dto);
 
         var created = Assert.IsType<CreatedAtActionResult>(action.Result);
         var resp = Assert.IsType<AuthResponseDTO>(created.Value);

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using CinemaApp.Filters;
 
 namespace CinemaApp.Controller
 {
@@ -42,6 +43,7 @@ namespace CinemaApp.Controller
 
         [HttpPost("initiate")]
         [AllowAnonymous]
+        [ServiceFilter(typeof(TurnstileFilter))]
         public IActionResult InitiateBooking([FromBody] BookingRequestDTO request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);

@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using CinemaApp.Filters;
 using CinemaApp.Model;
 using CinemaApp.Service;
 using Microsoft.AspNetCore.Authorization;
@@ -63,6 +64,7 @@ public class UserController(IUserService service) : ControllerBase
 
     [HttpPut("password")]
     [Authorize]
+    [ServiceFilter(typeof(TurnstileFilter))]
     public ActionResult UpdatePassword([FromBody] string password)
     {
         var sub = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value

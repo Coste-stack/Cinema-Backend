@@ -2,6 +2,7 @@ using CinemaApp.Model;
 using CinemaApp.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
+using CinemaApp.Filters;
 
 namespace CinemaApp.Controller;
 
@@ -11,10 +12,11 @@ public class AuthController(IUserService userService, IPasswordHasher<User> pass
 {
     private readonly IUserService _userService = userService;
     private readonly ITokenService _tokenService = tokenService;
-    private readonly IPasswordHasher<User> _passwordHasher = passwordHasher;    
+    private readonly IPasswordHasher<User> _passwordHasher = passwordHasher;
 
     [HttpPost("login")]
-    public ActionResult<AuthResponseDTO> Login([FromBody] LoginRequestDTO request)
+    [ServiceFilter(typeof(TurnstileFilter))]
+    public async Task<ActionResult<AuthResponseDTO>> Login([FromBody] LoginRequestDTO request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -43,7 +45,8 @@ public class AuthController(IUserService userService, IPasswordHasher<User> pass
     }
 
     [HttpPost("register")]
-    public ActionResult<AuthResponseDTO> Register([FromBody] UserCreateDTO dto)
+    [ServiceFilter(typeof(TurnstileFilter))]
+    public async Task<ActionResult<AuthResponseDTO>> Register([FromBody] UserCreateDTO dto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 

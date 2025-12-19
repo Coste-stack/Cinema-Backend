@@ -124,8 +124,17 @@ public class BookingRepository : IBookingRepository
             throw new NotFoundException("No booking found to update discounted price");
         }
         
-        // Update booking discounted price
-        booking.DiscountedPrice = booking.BasePrice - discountPrice;
+        // Calculate new discounted price
+        var newDiscounted = booking.BasePrice - discountPrice;
+
+        // If unchanged, return without saving
+        if (booking.DiscountedPrice == newDiscounted)
+        {
+            return booking;
+        }
+
+        // Update booking discounted price and save
+        booking.DiscountedPrice = newDiscounted;
         try
         {
             var affected = _context.SaveChanges();
